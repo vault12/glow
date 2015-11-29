@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" media="all" href="node_modules/mocha/mocha.css">
+  <title>The Glow ✨</title>
+  <!-- override a few mocha rules to make success/failures really stand out.-->
+  <style type="text/css">
+    #mocha li.passes, #mocha li.failures { font-size: 24px; }
+    #mocha li.passes em { color: lightgreen; }
+    #mocha li.failures em { color: red; }
+  </style>
+  <!-- A+ Promised Http Requests; comment out to use Zepto -->
+  <script type="text/javascript" src="node_modules/q/q.js"></script>
+  <script type="text/javascript" src="node_modules/q-xhr/q-xhr.js"></script>
+
+  <!-- Zepto can be used for Ajax (in absence of q-xhr) and OPTIONAL $.extend + $.map -->
+  <!-- <script type="text/javascript" src="lib/zepto.js"></script> -->
+
+  <script type="text/javascript" src="node_modules/js-nacl/lib/nacl_factory.js"></script>
+  <script type="text/javascript" src="node_modules/source-map-support/browser-source-map-support.js"></script>
+  <script type="text/javascript">
+    sourceMapSupport.install({handleUncaughtExceptions: false})
+  </script>
+
+  <!-- We use Mocha (https://mochajs.org/) to run our unit tests -->
+  <script type="text/javascript" src="node_modules/mocha/mocha.js"></script>
+  <script type="text/javascript">
+    mocha.setup('bdd')
+    // Kick off the unit tests for theglow library 
+    if (window.mochaPhantomJS)
+      mochaPhantomJS.run();
+    else
+      window.onload = function() { mocha.run() }
+  </script>
+
+  <!-- this contains our compiled tests -->
+  <script type="text/javascript" src='dist/tests.js'></script>
+</head>
+<body>
+<div id="mocha">
+<h1>The Glow ✨ : client crypto</h1>
+</div>
+</body>
+</html>
