@@ -8,6 +8,16 @@ KeyRing     = require 'keyring'
 KeyRatchet  = require 'keyratchet'
 Mailbox     = require 'mailbox'
 
+# RatchetBox is a prototype to show a simple ratcheting schema implementation via Glow.
+# By overload relay_send and relay_messages we can introduce a key ratchet between
+# mailbox and its guests. All payload messages (object trees) are delivered along with
+# system field 'next_key' that contains next public key in the ratchet. The guest 
+# confirm key with system field 'got_key'. Any message to guest or from guest advances
+# the ratchet to next_key from that side. 
+#
+# TODO: provision for loss of messages by introducing 'reset' field - mailboxes
+# can singnal they dont have key material to decrypt laste message. That will revert
+# ratchet to long term idenitiy key and will cause the start of new key chain.
 class RatchetBox extends Mailbox
 
   _loadRatchets: (guest) ->
