@@ -15,10 +15,8 @@ class Config
   # 5 min - Matched with config.x.relay.session_timeout
   @RELAY_SESSION_TIMEOUT: 5 * 60 * 1000
 
-  @RELAY_COMMANDS = ['count', 'upload', 'download', 'delete']
-
-  @RELAY_AJAX_TIMEOUT = 5 * 1000 # 5 seconds
-  # @RELAY_AJAX_TIMEOUT = 15 * 1000 # HIGH LATENCY
+  @RELAY_AJAX_TIMEOUT: 5 * 1000 # 5 seconds
+  # @RELAY_AJAX_TIMEOUT: 15 * 1000 # HIGH LATENCY
 
 module.exports = Config
 

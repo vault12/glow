@@ -27,15 +27,15 @@ class Nacl
     clearTimeout @_unloadTimer if @_unloadTimer
     @_unloadTimer = setTimeout((-> Nacl.unload()), 15 * 1000)
 
-    unless window.__nacl_instance   # Global instance to avoid duplicating heap
-      window.__nacl_instance = js_nacl.instantiate(@HEAP_SIZE) # 8mb heap
-    window.__nacl_instance
+    unless window.__naclInstance   # Global instance to avoid duplicating heap
+      window.__naclInstance = js_nacl.instantiate(@HEAP_SIZE) # 8mb heap
+    window.__naclInstance
 
   @unload: ->
     # Nacl hasn't been used in 15 seconds, unload it and free the heap
     @_unloadTimer = null
-    window.__nacl_instance = null
-    delete window.__nacl_instance
+    window.__naclInstance = null
+    delete window.__naclInstance
 
   @makeSecretKey: ->
     new Keys(
@@ -75,7 +75,7 @@ class Nacl
   @h2: (str) ->
     str = str.toUint8ArrayRaw() if Utils.type(str) is 'String'
     tmp = new Uint8Array(32 + str.length)
-    tmp.fill_with 0
+    tmp.fillWith 0
     tmp.set(str, 32)
     @sha256 @sha256 tmp
 

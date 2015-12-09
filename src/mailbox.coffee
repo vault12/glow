@@ -21,9 +21,9 @@ class MailBox
   # as the rest of of the data.
   constructor: (@identity, strMasterKey = null) ->
     @keyRing = new KeyRing(@identity, strMasterKey)
-    @session_keys = {}
-    @session_relay = {}
-    @session_timeout = {}
+    @sessionKeys = {}
+    @sessionRelay = {}
+    @sessionTimeout = {}
 
   # You can create a Mailbox where the secret identity key is derived from a
   # well-known seed.
@@ -45,7 +45,7 @@ class MailBox
   # Relays use as the universal address of your mailbox.
   hpk: ->
     return @_hpk if @_hpk
-    @_hpk = Nacl.h2(@keyRing.comm_key.boxPk)
+    @_hpk = Nacl.h2(@keyRing.commKey.boxPk)
 
   # This is your public identity and default communication key. Your
   # correspondents can know it, whereas Relays do not need it (other than
@@ -56,27 +56,27 @@ class MailBox
   # Each session with each Zax Relay creates its own temporary session keys
   createSessionKey: (sess_id) ->
     throw new Error('createSessionKey - no sess_id') unless sess_id
-    return @session_keys[sess_id] if @session_keys[sess_id]?
-    @session_keys[sess_id] = Nacl.makeKeyPair()
+    return @sessionKeys[sess_id] if @sessionKeys[sess_id]?
+    @sessionKeys[sess_id] = Nacl.makeKeyPair()
 
     # Remove key material after it expires on the relay
-    @session_timeout[sess_id] = Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
-      @session_keys[sess_id] = null
-      delete @session_keys[sess_id]
+    @sessionTimeout[sess_id] = Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
+      @sessionKeys[sess_id] = null
+      delete @sessionKeys[sess_id]
 
-      @session_timeout[sess_id] = null
-      delete @session_timeout[sess_id]
+      @sessionTimeout[sess_id] = null
+      delete @sessionTimeout[sess_id]
 
-      @session_relay[sess_id] = null
-      delete @session_relay[sess_id]
+      @sessionRelay[sess_id] = null
+      delete @sessionRelay[sess_id]
 
-    return @session_keys[sess_id]
+    return @sessionKeys[sess_id]
 
   # --- Low level encoding/decoding ---
 
   rawEncodeMessage: (msg, pkTo, skFrom) ->
     throw new Error('rawEncodeMessage: missing params') unless msg? and pkTo? and skFrom?
-    nonce = @_make_nonce()
+    nonce = @_makeNonce()
     return r =
       nonce: nonce.toBase64()
       ctext: Nacl.use().crypto_box(
@@ -124,7 +124,7 @@ class MailBox
   # a connection to a relay and then send the first message via that relay.
   sendToVia: (guest, relay, msg) ->
     @connectToRelay(relay).then =>
-      @relay_send(guest, msg, relay)
+      @relaySend(guest, msg, relay)
 
   # If we are not connected to a relay, we can still get pending messages for
   # us from that relay. This call will first establish a connection to a relay
@@ -132,7 +132,7 @@ class MailBox
   # messages and download meta-data about those messages.
   getRelayMessages: (relay) ->
     @connectToRelay(relay).then =>
-      @relay_messages()
+      @relayMessages()
 
   # --- Established communication functions ---
   # Once a connection with a relay is established there is no need to create
@@ -140,22 +140,22 @@ class MailBox
   # using previously established connections to a relay stored in @lastRelay
 
   # Gets pending messages count and stores it in @count
-  relay_count: ->
-    throw new Error('relay_count - no open relay') unless @lastRelay
+  relayCount: ->
+    throw new Error('relayCount - no open relay') unless @lastRelay
     @lastRelay.count(@).then =>
       @count = parseInt @lastRelay.result
 
   # Sends a free-form object to a guest whose keys we already have in our
   # keyring via @lastRelay
-  relay_send: (guest, msg) ->
-    throw new Error('mbx: relay_send - no open relay') unless @lastRelay
-    enc_msg = @encodeMessage(guest, msg)
-    @lastMsg = enc_msg
-    @lastRelay.upload(@,Nacl.h2(@_gPk guest), enc_msg)
+  relaySend: (guest, msg) ->
+    throw new Error('mbx: relaySend - no open relay') unless @lastRelay
+    encMsg = @encodeMessage(guest, msg)
+    @lastMsg = encMsg
+    @lastRelay.upload(@, Nacl.h2(@_gPk guest), encMsg)
 
   # Downloads pending relay messages into @lastDownload
-  relay_messages: ->
-    throw new Error('relay_messages - no open relay') unless @lastRelay
+  relayMessages: ->
+    throw new Error('relayMessages - no open relay') unless @lastRelay
     @lastRelay.download(@).then =>
       @lastDownload = []
       for emsg in @lastRelay.result
@@ -168,20 +168,20 @@ class MailBox
   # If @downloadMeta has been populated by previous calls, this maps the list
   # of nonces of current messages on the relay. Since nonces are forced to be
   # unique, they are used as global message ids for a given mailbox
-  relay_nonce_list: ->
-    throw new Error('relay_nonce_list - no metadata') unless @lastDownload
+  relayNonceList: ->
+    throw new Error('relayNonceList - no metadata') unless @lastDownload
     Utils.map @lastDownload, (i) -> i.nonce
 
   # Deletes messages from the relay given a list of message nonces.
-  relay_delete: (list) ->
-    throw new Error('relay_delete - no open relay') unless @lastRelay
+  relayDelete: (list) ->
+    throw new Error('relayDelete - no open relay') unless @lastRelay
     @lastRelay.delete(@, list)
 
-  # Calls @relay_delete @relay_nonce_list: deletes up to the first 100 messages
+  # Calls @relayDelete @relayNonceList: deletes up to the first 100 messages
   # from the relay for a given mailbox.
   clean: (r) ->
     @getRelayMessages(r).then =>
-      @relay_delete(@relay_nonce_list())
+      @relayDelete(@relayNonceList())
 
   # Deletes a Mailbox and all its data from local CryptoStorage. This is a very
   # destructive operation, use with caution - it will also delete the Mailbox
@@ -209,7 +209,7 @@ class MailBox
 
   _getSecretKey: (guest, session, skTag) ->
     unless skTag
-      return if session then @session_keys[guest].boxSk else @keyRing.comm_key.boxSk
+      return if session then @sessionKeys[guest].boxSk else @keyRing.commKey.boxSk
     else
       # In this case we use the key ring to store temp secret keys
       return @_gPk skTag
@@ -221,7 +221,7 @@ class MailBox
 
   # Makes a timestamp nonce that a relay expects for any crypto operations.
   # timestamp is the first 8 bytes, the rest is random
-  _make_nonce: (time = parseInt(Date.now() / 1000)) ->
+  _makeNonce: (time = parseInt(Date.now() / 1000)) ->
     nonce = Nacl.use().crypto_box_random_nonce()
     throw new Error('RNG failed, try again?') unless nonce? and nonce.length is 24
 

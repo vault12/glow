@@ -5,7 +5,7 @@ Utils   = require 'utils'
 # === Utils helper ===
 
 describe 'Utils functions', ->
-  return unless window.__global_test.run_tests['utils']
+  return unless window.__globalTest.runTests['utils']
 
   it 'ArrayBuffer to/from base64:', ->
     ab = new Uint8Array([0..255])
@@ -28,14 +28,14 @@ describe 'Utils functions', ->
     a8.fromCharCodes().should.not.equal s
     a16.fromCharCodes().should.equal s
 
-  it 'fill_with Uint8Array', ->
+  it 'fillWith Uint8Array', ->
     a = new Uint8Array([97, 98, 99])
-    a.fill_with 0
+    a.fillWith 0
     b = new Uint8Array([0, 0, 0])
     a.should.deep.equal(b)
 
 describe 'Base64 functions', ->
-  return unless window.__global_test.run_tests['utils']
+  return unless window.__globalTest.runTests['utils']
 
   it 'btoa and atob ascii string:', ->
     bin = '123'

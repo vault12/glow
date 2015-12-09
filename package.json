@@ -1,6 +1,6 @@
 {
   "name": "theglow",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Client library for interacting with Zax Cryptographic Relay Servers.",
   "author": "Vault12 <glow@vault12.com>",
   "repository": {

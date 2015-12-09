@@ -10,7 +10,7 @@ Relay   = require 'relay'
 
 # ----- Communication MailBox -----
 describe 'MailBox, offline Relay', ->
-  return unless window.__global_test.run_tests['mailbox']
+  return unless window.__globalTest.runTests['mailbox']
 
   [Alice, Bob] = [null, null]
 

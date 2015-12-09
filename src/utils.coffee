@@ -15,7 +15,7 @@ class Utils
       $.extend target, source
     else
       for key, val of source
-        if source[key] != undefined
+        if source[key] isnt undefined
           target[key] = source[key]
       target
 
@@ -24,7 +24,7 @@ class Utils
       $?.map array, func
     else
       # http://caniuse.com/#search=map
-      Array.prototype.map.apply array, [ func ]
+      Array::map.apply array, [ func ]
 
   # convenience function for extending an object by class
   @include = (klass, mixin) ->
@@ -34,7 +34,7 @@ class Utils
   @type = (obj) ->
     return 'undefined' if obj is undefined
     return 'null' if obj is null
-    Object.prototype.toString.call(obj)
+    Object::toString.call(obj)
       .replace('[', '').replace(']', '').split(' ')[1]
 
   @ajaxImpl: null
@@ -47,7 +47,7 @@ class Utils
   @ajax: (url, data) ->
 
     # no ajax impl set?
-    if @ajaxImpl == null
+    if @ajaxImpl is null
       # try to auto-set some default implementations here, if present
 
       # set the impl to q-xhr if present
@@ -121,14 +121,14 @@ class Utils
         return @firstZeroBits(a, rmd)
     return false
 
-  # TODO: add some comments on these replace calls
+  # Prints a current stack trace to the console
   @logStack: (err) ->
     err = new Error('stackLog') unless err
     s = err.stack.replace(/^[^\(]+?[\n$]/gm, '')
     .replace(/^\s+at\s+/gm, '')
     .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
     .split('\n')
-    console.log "#{i}: #{sl}" for sl,i in s
+    console.log "#{i}: #{sl}" for sl, i in s
 
 module.exports = Utils
 window.Utils = Utils if window.__CRYPTO_DEBUG

@@ -9,7 +9,7 @@ Nacl    = require 'nacl'
 Relay   = require 'relay'
 
 describe 'Relay Ops, wrapper API', ->
-  return unless window.__global_test.run_tests['relay wrapper']
+  return unless window.__globalTest.runTests['relay wrapper']
   @timeout(500)
 
   [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
@@ -17,23 +17,23 @@ describe 'Relay Ops, wrapper API', ->
   Bob.keyRing.addGuest('Alice', Alice.getPubCommKey())
 
   it 'upload message to mailbox :hpk', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     Alice.sendToVia('Bob', r, 'Hi Bob from Alice 202').done ->
-      window.__global_test.bob_nonce2 = Alice.lastMsg.nonce
+      window.__globalTest.bob_nonce2 = Alice.lastMsg.nonce
       done()
 
   it 'count Bob mailbox', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     Bob.connectToRelay(r).done ->
       r.count(Bob).done ->
         expect(r.result).equal 1
         done()
 
   it 'download Bob mailbox', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     Bob.connectToRelay(r).done ->
       r.download(Bob).done ->
         d = r.result[0]
@@ -42,8 +42,8 @@ describe 'Relay Ops, wrapper API', ->
         done()
 
   it 'delete from Bob mailbox', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     Bob.connectToRelay(r).done ->
       # not deleted anything
       r.delete(Bob, []).done ->
@@ -52,7 +52,7 @@ describe 'Relay Ops, wrapper API', ->
           # so it is the same count
         .done ->
         # now lets delete for real
-          r.delete(Bob,[__global_test.bob_nonce2]).then ->
+          r.delete(Bob,[__globalTest.bob_nonce2]).then ->
             expect(r.result).equal 0
           .done ->
             r.count(Bob).done ->

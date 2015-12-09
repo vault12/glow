@@ -1,3 +1,6 @@
+# Copyright (c) 2015 Vault12, Inc.
+# MIT License https://opensource.org/licenses/MIT
+
 # A test driver - not to be used in production for permanent key storage
 class SimpleTestDriver
 

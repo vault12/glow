@@ -9,8 +9,8 @@ Keys          = require 'keys'
 
 # ----- Cryptographic Storage -----
 describe 'Storage service', ->
-  return unless window.__global_test.run_tests['crypto']
-  
+  return unless window.__globalTest.runTests['crypto']
+
   ST = new CryptoStorage({}) # dummy key
 
   it 'tagging', ->
@@ -20,26 +20,26 @@ describe 'Storage service', ->
 
   it 'low level write/read', ->
     ST._set 'hello world', 'wello horld'
-    expect(ST._local_get 'hello world').is.null
-    expect(ST._local_get ST.tag 'hello world').equal('wello horld')
+    expect(ST._localGet 'hello world').is.null
+    expect(ST._localGet ST.tag 'hello world').equal('wello horld')
     expect(ST._set null, '123').is.null
     expect(ST._set '123', null).is.null
     ST._set('hello world', 'wello horld').should.equal ST._get('hello world')
-    ST._local_remove ST.tag 'hello world'
+    ST._localRemove ST.tag 'hello world'
     expect(ST._get 'hello world').is.null
 
   it 'make new key', ->
     ST = new CryptoStorage()
-    expect(ST.storage_key).not.null
+    expect(ST.storageKey).not.null
 
-    ST._local_remove 'storage_key.v1.stor.vlt12'
+    ST._localRemove 'storage_key.v1.stor.vlt12'
     ST2 = new CryptoStorage()
-    expect(ST2.storage_key).not.null
+    expect(ST2.storageKey).not.null
 
-    ST.storage_key.key.should.not.equal(ST2.storage_key.key)
+    ST.storageKey.key.should.not.equal(ST2.storageKey.key)
 
-    ST2 = new CryptoStorage(ST.storage_key)
-    ST.storage_key.key.should.equal(ST2.storage_key.key)
+    ST2 = new CryptoStorage(ST.storageKey)
+    ST.storageKey.key.should.equal(ST2.storageKey.key)
 
   secret1 = 'hello world'
   secret2 =
@@ -68,7 +68,7 @@ describe 'Storage service', ->
     ST = new CryptoStorage()
     ST.newKey()
     ST.save('hello', secret2)
-    key = ST.storage_key.toString() # b64 string
+    key = ST.storageKey.toString() # b64 string
 
     ST2 = new CryptoStorage(Keys.fromString(key))
     s2 = ST2.get('hello')
@@ -79,8 +79,8 @@ describe 'Storage service', ->
 
   it 'clean storage key', ->
     ST = new CryptoStorage()
-    expect(ST._local_get 'storage_key.v1.stor.vlt12').
+    expect(ST._localGet 'storage_key.v1.stor.vlt12').
       not.null
     ST.selfDestruct(true)
-    expect(ST._local_get 'storage_key.v1.stor.vlt12').
+    expect(ST._localGet 'storage_key.v1.stor.vlt12').
       is.null

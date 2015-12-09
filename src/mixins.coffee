@@ -49,9 +49,9 @@ for C in [Array , Uint8Array , Uint16Array]
       new Uint8Array(c ^ a[i] for c, i in @)
 
     equal: (a2) ->
-      return false if @.length != a2.length
+      return false if @.length isnt a2.length
       for v,i in @
-        return false if v != a2[i]
+        return false if v isnt a2[i]
       return true
 
 Utils.include Uint8Array,
@@ -63,7 +63,7 @@ Utils.include Uint8Array,
     return tmp
 
   # .fill() for setting the whole array to a particular value
-  fill_with: (val) ->
+  fillWith: (val) ->
     for v, i in @
       @[i] = val
     @ # allows call chaining

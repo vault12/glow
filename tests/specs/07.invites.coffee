@@ -10,7 +10,7 @@ Relay   = require 'relay'
 
 # ----- Example: sketch of exchanging invite codes -----
 describe 'Invite codes', ->
-  return unless window.__global_test.run_tests['relay invites']
+  return unless window.__globalTest.runTests['relay invites']
 
   @timeout(1000)
 
@@ -23,8 +23,8 @@ describe 'Invite codes', ->
   # Let's do it via SMS/email
 
   it 'Alice invites Bob', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
 
     aliceTemp = new MailBox('aliceTemp')
     inviteCode = MailBox.fromSeed('Hello Bob!')
@@ -45,16 +45,16 @@ describe 'Invite codes', ->
 
   bobCode = null
   it 'Bob uses invite code', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
 
     bobCode = MailBox.fromSeed(sms_invite[0])
     bobCode.keyRing.addGuest 'aliceTemp', sms_invite[1]
 
     bobCode.connectToRelay(r).done ->
-      bobCode.relay_count().done ->
+      bobCode.relayCount().done ->
         expect(r.result).equal 1
-        bobCode.relay_messages().done ->
+        bobCode.relayMessages().done ->
           expect(bobCode.lastDownload).length.is 1
           invite_block = bobCode.lastDownload[0].msg
 
@@ -65,8 +65,8 @@ describe 'Invite codes', ->
           done()
 
   it 'Bob sends Alice his credentials', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
 
     bobCode.sendToVia('aliceTemp', r,
       dest: 'Alice'
@@ -79,8 +79,8 @@ describe 'Invite codes', ->
       done()
 
   it 'Alice gets Bob public key', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
 
     aliceTemp.getRelayMessages(r).done ->
       bob_data = aliceTemp.lastDownload[0].msg
@@ -97,7 +97,7 @@ describe 'Invite codes', ->
       done()
 
   it 'Alice has a comm channel to Bob', ->
-    return if __global_test.offline
+    return if __globalTest.offline
     expect(Alice._gPk('Bob').toBase64()).equal Bob.getPubCommKey()
     # Alice sends her invite block to Bob over a secure channel
 
@@ -105,8 +105,8 @@ describe 'Invite codes', ->
     Alice.selfDestruct(true)
     Bob.selfDestruct(true)
 
-    if not __global_test.offline
-      r = new Relay(__global_test.host)
+    if not __globalTest.offline
+      r = new Relay(__globalTest.host)
       inv = MailBox.fromSeed('Hello Bob!')
       inv.clean(r).done ->
         inv.selfDestruct(true)
