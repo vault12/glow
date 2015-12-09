@@ -9,16 +9,16 @@ Nacl = require 'nacl'
 
 # ----- Nacl -----
 describe 'NACL', ->
-  return unless window.__global_test.run_tests['nacl']
+  return unless window.__globalTest.runTests['nacl']
 
   it 'factory load/unload', ->
     Nacl.makeSecretKey()
-    expect(window.__nacl_instance).not.null
+    expect(window.__naclInstance).not.null
     setTimeout( ->
-      s = if window.__nacl_instance? then 'OK!' else 'FAIL!'
+      s = if window.__naclInstance? then 'OK!' else 'FAIL!'
     , 5 * 1000)
     setTimeout( ->
-      s = if window.__nacl_instance? then 'FAIL!' else 'OK!'
+      s = if window.__naclInstance? then 'FAIL!' else 'OK!'
     , 20 * 1000)
 
   it 'Hash₂ of utf8 strings', ->
@@ -85,7 +85,7 @@ describe 'NACL', ->
 
 # ----- Keys -----
 describe 'Keys', ->
-  return unless window.__global_test.run_tests['nacl']
+  return unless window.__globalTest.runTests['nacl']
 
   k1 = Nacl.makeSecretKey()
   k2 = Nacl.makeKeyPair()

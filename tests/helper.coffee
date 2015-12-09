@@ -31,7 +31,7 @@ if localStorage
   # Start crypto storage stystem with simple localStorage driver
   CryptoStorage.startStorageSystem drv
 
-window.__global_test =
+window.__globalTest =
   # host points to known Zax server(s). To set up your own Zax server, see the
   # instructions at https://github.com/vault12/zax#installation
 
@@ -40,7 +40,7 @@ window.__global_test =
   offline: false
 
   # control which tests to run
-  run_tests:
+  runTests:
     'utils':            true
     'nacl':             true
     'crypto':           true

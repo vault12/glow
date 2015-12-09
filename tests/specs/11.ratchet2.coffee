@@ -10,7 +10,7 @@ Relay   = require 'relay'
 Utils   = require 'utils'
 
 describe 'Ratchet With Noise', ->
-  return unless window.__global_test.run_tests['relay noise ratchet']
+  return unless window.__globalTest.runTests['relay noise ratchet']
 
   # Work in progress: randomly delete messages
   # and instrument RatchetBox to recover from
@@ -22,8 +22,8 @@ describe 'Ratchet With Noise', ->
   @timeout(5000)
   # @timeout(10000) # if you are far from relay
 
-  return done() if __global_test.offline
-  r = new Relay(__global_test.host)
+  return done() if __globalTest.offline
+  r = new Relay(__globalTest.host)
 
   max_test = 20
   max_guest = 3
@@ -46,17 +46,17 @@ describe 'Ratchet With Noise', ->
       mbx[d].keyRing.addGuest("guest#{max_guest + j}", mbx[i].getPubCommKey())
 
   # send test messages and get a few back
-  window.__global_test.idx111 = 0
+  window.__globalTest.idx111 = 0
   for v in [0...max_guest]
     for k in [0...max_test]
       it "test #{k}", (done) ->
-        return done() if __global_test.offline
-        i = window.__global_test.idx111++ % max_test
+        return done() if __globalTest.offline
+        i = window.__globalTest.idx111++ % max_test
         j = Nacl.random(1)[0] % max_guest
         hpk_from  = mbx[i].hpk().toBase64()
         hpk_to    = mbx[i]._gHpk("guest#{j}").toBase64()
         mbx[i].sendToVia("guest#{j}", r, "ratchet #{hpk_from} mbx#{i}=>guest#{j} #{hpk_to}").done ->
-          mbx[i].relay_messages().done ->
+          mbx[i].relayMessages().done ->
             if mbx[i].lastDownload.length > 0
               for m in mbx[i].lastDownload
                 # console.log m
@@ -64,25 +64,25 @@ describe 'Ratchet With Noise', ->
             done()
 
   # get last messages back
-  window.__global_test.idx112 = 0
+  window.__globalTest.idx112 = 0
   for k in [0...max_test]
     it "download #{k}", (done) ->
-      return done() if __global_test.offline
-      i = window.__global_test.idx112++
+      return done() if __globalTest.offline
+      i = window.__globalTest.idx112++
       mbx[i].getRelayMessages(r).done ->
-        l = mbx[i].relay_nonce_list()
+        l = mbx[i].relayNonceList()
         # console.log l.length
-        mbx[i].relay_delete(l).done ->
+        mbx[i].relayDelete(l).done ->
           done()
 
   # delete mailboxes after delay to
   # let previous requests complete
-  window.__global_test.idx113 = 0
-  window.__global_test.idx114 = 0
+  window.__globalTest.idx113 = 0
+  window.__globalTest.idx114 = 0
   for k in [0...max_test]
-    j = window.__global_test.idx113++
+    j = window.__globalTest.idx113++
     it "cleanup #{j}", (done)->
       Utils.delay 100, ->
-        i = window.__global_test.idx114++
+        i = window.__globalTest.idx114++
         mbx[i].selfDestruct(true,true)
         done()

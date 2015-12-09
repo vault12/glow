@@ -9,7 +9,7 @@ Nacl    = require 'nacl'
 Relay   = require 'relay'
 
 describe 'Relay Ops, low level API', ->
-  return unless window.__global_test.run_tests['relay low level']
+  return unless window.__globalTest.runTests['relay low level']
   @timeout(500)
 
   [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
@@ -18,11 +18,11 @@ describe 'Relay Ops, low level API', ->
   Bob.keyRing.addGuest('Alice', Alice.getPubCommKey())
 
   it 'upload plaintext message to mailbox :hpk', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     r.openConnection().done ->
       r.connectMailbox(Alice).done ->
-        expect(Alice.session_keys).not.empty
+        expect(Alice.sessionKeys).not.empty
         r.runCmd('upload', Alice,
           to: Bob.hpk().toBase64()
           payload: 'Hi Bob from Alice 101')
@@ -30,8 +30,8 @@ describe 'Relay Ops, low level API', ->
           done()
 
   it 'message count in Bob mailbox', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     r.openConnection().done ->
       r.connectMailbox(Bob).done ->
         r.runCmd('count', Bob).done ->
@@ -39,18 +39,18 @@ describe 'Relay Ops, low level API', ->
           done()
 
   it 'download plaintext Bob mailbox', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     r.openConnection().done ->
       r.connectMailbox(Bob).done ->
         r.runCmd('download', Bob).done ->
           expect(r.result[0].data).equal 'Hi Bob from Alice 101'
-          window.__global_test.bob_nonce = r.result[0].nonce
+          window.__globalTest.bob_nonce = r.result[0].nonce
           done()
 
   it 'delete from Bob mailbox', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     r.openConnection().done ->
       r.connectMailbox(Bob).done ->
         # have not deleted anything
@@ -62,14 +62,14 @@ describe 'Relay Ops, low level API', ->
         .done ->
           # now delete for real
           r.runCmd('delete', Bob,
-            payload: [__global_test.bob_nonce])
+            payload: [__globalTest.bob_nonce])
           .done ->
             expect(r.result).equal 0
             done()
 
   it 'few bad commands', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     r.openConnection().done ->
       r.connectMailbox(Bob).done ->
         expect(-> r.runCmd('count2', Bob)).to.throw(Error)

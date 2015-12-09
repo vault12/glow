@@ -10,16 +10,17 @@ Nacl    = require 'nacl'
 
 # ----- Keyring with guest keys -----
 describe 'KeyRing with keys', ->
-  return unless window.__global_test.run_tests['keyring']
+  return unless window.__globalTest.runTests['keyring']
 
   r1 = new KeyRing('main_test')
   r2 = new KeyRing('backup_test')
+  k1 = null
 
   it 'create keyring', ->
     for r in [r1, r2]
       expect(r.storage).is.not.null
-      expect(r.comm_key).is.not.null
-      expect(r.guest_keys).is.not.null
+      expect(r.commKey).is.not.null
+      expect(r.guestKeys).is.not.null
       expect(r.registry).is.not.null
 
   key_buffer = []
@@ -55,11 +56,11 @@ describe 'KeyRing with keys', ->
 
       r.addGuest('Alice', a.strPubKey())
       expect(r.registry.length).equal(1)
-      expect(r.guest_keys['Alice']).not.null
+      expect(r.guestKeys['Alice']).not.null
 
       r.addGuest('Bob', b.strPubKey())
       expect(r.registry.length).equal(2)
-      expect(r.guest_keys['Bob']).not.null
+      expect(r.guestKeys['Bob']).not.null
 
   it 'guest keys match', ->
     # retrieved keys equal the ones we provided
@@ -74,24 +75,39 @@ describe 'KeyRing with keys', ->
     for r in [r1, r2]
       r.removeGuest('Alice')
       expect(r.registry.length).equal(1)
-      expect(r.guest_keys['Alice']).to.be.undefined
+      expect(r.guestKeys['Alice']).to.be.undefined
       expect(r.registry.indexOf('Alice')).equal(-1)
 
       r.removeGuest('Bob')
       expect(r.registry.length).equal(0)
-      expect(r.guest_keys['Bob']).to.be.undefined
+      expect(r.guestKeys['Bob']).to.be.undefined
       expect(r.registry.indexOf('Bob')).equal(-1)
 
   [spectre, jb] = [null,null]
   it 'create from secret key', ->
     spectre = new KeyRing('missile_command_1')
-    write_on_napkin = spectre.comm_key.strSecKey()
+    write_on_napkin = spectre.commKey.strSecKey()
 
     # smuggle the napkin
     jb = new KeyRing('james_bond_briefcase')
     jb.commFromSecKey write_on_napkin.fromBase64()
-    expect(spectre.comm_key).deep.equal jb.comm_key
+    expect(spectre.commKey).deep.equal jb.commKey
+
+  it 'guest persistence', ->
+    id1 = Nacl.random().toBase64()
+    key = Nacl.makeKeyPair().strPubKey()
+
+    k1 = new KeyRing(id1)
+    k1.addGuest('guest', key)
+    keyA = k1.getGuestKey('guest')
+
+    k2 = new KeyRing(id1)
+    keyB = k2.getGuestKey('guest')
+
+    expect(keyA).is.not.null
+    expect(keyB).is.not.null
+    expect(keyA.toString()).equal(keyB.toString())
 
   it 'clean up storage', ->
-    for r in [r1, r2, spectre, jb]
+    for r in [r1, r2, spectre, jb, k1]
       r.selfDestruct(true)

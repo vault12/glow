@@ -10,7 +10,7 @@ Relay   = require 'relay'
 Utils   = require 'utils'
 
 describe 'Relay Bulk Ops', ->
-  return unless window.__global_test.run_tests['relay bulk']
+  return unless window.__globalTest.runTests['relay bulk']
   @timeout(1000)
 
   [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
@@ -23,19 +23,19 @@ describe 'Relay Bulk Ops', ->
   code3 = {id: 3, code: 11111, msg: 'Missile code #2 is 11111'}
 
   it 'Give missile codes to Bob', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     Alice.sendToVia('Bob', r, code1).done ->
-      Alice.relay_send('Bob', code2).done ->
-        Alice.relay_send('Bob', code3).done ->
+      Alice.relaySend('Bob', code2).done ->
+        Alice.relaySend('Bob', code3).done ->
           Bob.connectToRelay(r).done ->
-            Bob.relay_count().done ->
+            Bob.relayCount().done ->
               expect(r.result).equal 3
               done()
 
   it 'Bob gets missile codes', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     Bob.getRelayMessages(r).done ->
       expect(Bob.lastDownload).length.is 3
       msgs = Utils.map Bob.lastDownload, (m) -> m.msg
@@ -43,14 +43,14 @@ describe 'Relay Bulk Ops', ->
       done()
 
   it 'Bob erases his tracks', (done) ->
-    return done() if __global_test.offline
-    r = new Relay(__global_test.host)
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
     list = Utils.map Bob.lastDownload, (i) -> i.nonce
     Bob.connectToRelay(r).done ->
-      Bob.relay_count().done ->
+      Bob.relayCount().done ->
         expect(r.result).equal 3
-        Bob.relay_delete(list).done ->
-          Bob.relay_count().done ->
+        Bob.relayDelete(list).done ->
+          Bob.relayCount().done ->
             expect(r.result).equal 0
             done()
 

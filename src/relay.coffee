@@ -8,11 +8,10 @@ Utils = require 'utils'
 class Relay
   # skip url for offline testing
   constructor: (@url = null) ->
-    @_reset_state() # until a succesful handshake
+    @_resetState() # until a succesful handshake
     @lastError = null
 
     # plugins can add their own commands to specific relays
-    # TODO: why not re-use what is in config?
     @RELAY_COMMANDS = ['count', 'upload', 'download', 'delete']
 
   openConnection: ->
@@ -24,21 +23,21 @@ class Relay
     throw new Error('getServerToken - no url') unless @url
     @lastError = null
 
-    # Generate a client_token. It will be used as part of handshake id with relay
-    @client_token = Nacl.random(Config.RELAY_TOKEN_LEN) unless @client_token
+    # Generate a clientToken. It will be used as part of handshake id with relay
+    @clientToken = Nacl.random(Config.RELAY_TOKEN_LEN) unless @clientToken
 
     # sanity check the client token
-    if @client_token and @client_token.length isnt Config.RELAY_TOKEN_LEN
+    if @clientToken and @clientToken.length isnt Config.RELAY_TOKEN_LEN
       throw new Error("Token must be #{Config.RELAY_TOKEN_LEN} bytes")
 
-    @_ajax('start_session', @client_token.toBase64()).then (data)=>
+    @_ajax('start_session', @clientToken.toBase64()).then (data) =>
       # relay responds with its own counter token. Until session is
       # established these 2 tokens are handshake id.
       lines = @_processData data
-      @relay_token = lines[0].fromBase64()
-      @diff = if lines.length == 2 then parseInt(lines[1]) else 0
-      @h2_relay_token = Nacl.h2 @relay_token
-      @_schedule_expire_session Config.RELAY_TOKEN_TIMEOUT
+      @relayToken = lines[0].fromBase64()
+      @diff = if lines.length is 2 then parseInt(lines[1]) else 0
+
+      @_scheduleExpireSession Config.RELAY_TOKEN_TIMEOUT
       # Will remove after token expires on relay
       if @diff > 4
         console.log "Relay #{@url} requested difficulty #{@diff}. Session handshake may take longer."
@@ -46,54 +45,54 @@ class Relay
         console.log "Attempting handshake at difficulty #{@diff}! This may take a while"
 
   getServerKey: ->
-    throw new Error('getServerKey - missing params') unless @url and @client_token and @relay_token
+    throw new Error('getServerKey - missing params') unless @url and @clientToken and @relayToken
     @lastError = null
 
-    # After the client_token is sent to reley, we use only the h2() of it
-    @h2_client_token = Nacl.h2(@client_token).toBase64()
+    # After the clientToken is sent to reley, we use only the h2() of it
+    @h2ClientToken = Nacl.h2(@clientToken).toBase64()
 
-    handshake = @client_token.concat @relay_token
+    handshake = @clientToken.concat @relayToken
     if @diff is 0
-      sess_hs = Nacl.h2(handshake).toBase64()
+      sessionHandshake = Nacl.h2(handshake).toBase64()
     else
       nonce = Nacl.random 32
       until Utils.arrayZeroBits(Nacl.h2(handshake.concat nonce), @diff)
         nonce = Nacl.random 32
-      sess_hs = nonce.toBase64()
+      sessionHandshake = nonce.toBase64()
 
-    # We confirm handshake by sending back h2(client_token, relay_token)
-    @_ajax('verify_session', "#{@h2_client_token}\r\n#{sess_hs}\r\n").then (d)=>
+    # We confirm handshake by sending back h2(clientToken, relay_token)
+    @_ajax('verify_session', "#{@h2ClientToken}\r\n#{sessionHandshake}\r\n").then (d) =>
       # relay gives us back temp session key
-      # masked by client_token we started with
-      relay_pk = d.fromBase64()
-      @relay_key = new Keys { boxPk: relay_pk }
+      # masked by clientToken we started with
+      relayPk = d.fromBase64()
+      @relayKey = new Keys { boxPk: relayPk }
       @online = true
-      # @_schedule_expire_session Config.RELAY_SESSION_TIMEOUT
+      # @_scheduleExpireSession Config.RELAY_SESSION_TIMEOUT
       # Will remove after the key expires on this relay
 
   connectMailbox: (mbx) ->
-    throw new Error('connectMailbox - missing params') unless mbx? and @online and @relay_key? and @url?
+    throw new Error('connectMailbox - missing params') unless mbx? and @online and @relayKey? and @url?
     @lastError = null
 
-    relay_id = "relay_#{@url}"
-    client_temp = mbx.createSessionKey(relay_id).boxPk
-    mbx.keyRing.addTempGuest relay_id, @relay_key.strPubKey()
-    delete @relay_key # now it belongs to the mailbox
+    relayId = "relay_#{@url}"
+    clientTemp = mbx.createSessionKey(relayId).boxPk
+    mbx.keyRing.addTempGuest relayId, @relayKey.strPubKey()
+    delete @relayKey # now it belongs to the mailbox
 
-    masked_client_temp_pk = client_temp.toBase64()
+    maskedClientTempPk = clientTemp.toBase64()
 
     # Alice creates a 32 byte session signature as
-    # h₂(a_temp_pk,relay_token, client_token)
-    sign = client_temp.concat(@relay_token).concat(@client_token)
-    h2_sign = Nacl.h2(sign)
+    # h₂(a_temp_pk,relay_token, clientToken)
+    sign = clientTemp.concat(@relayToken).concat(@clientToken)
+    h2Sign = Nacl.h2(sign)
 
-    inner = mbx.encodeMessage relay_id, h2_sign
+    inner = mbx.encodeMessage relayId, h2Sign
     inner['pub_key'] = mbx.keyRing.getPubCommKey()
     outer = mbx.encodeMessage "relay_#{@url}", inner, true
 
     @_ajax('prove',
-      "#{@h2_client_token}\r\n" +
-      "#{masked_client_temp_pk}\r\n" +
+      "#{@h2ClientToken}\r\n" +
+      "#{maskedClientTempPk}\r\n" +
       "#{outer.nonce}\r\n" +
       "#{outer.ctext}")
     .then (d)=>
@@ -146,27 +145,27 @@ class Relay
   download: (mbx) ->
     @runCmd('download', mbx)
 
-  delete: (mbx,nonce_list) ->
+  delete: (mbx, nonceList) ->
     @runCmd('delete', mbx,
-      payload: nonce_list)
+      payload: nonceList)
 
   # Deletes all local session tokens
   # Our information has expired on the relay and a new session has to be
   # established with all new tokens
-  _reset_state: ->
-    @client_token = null
+  _resetState: ->
+    @clientToken = null
     @online = false
-    @relay_token = null
-    @relay_key = null
-    @client_token_expiration = null
+    @relayToken = null
+    @relayKey = null
+    @clientTokenExpiration = null
 
-  _schedule_expire_session: (tout) ->
-    clearTimeout(@client_token_expiration) if @client_token_expiration
-    @client_token_expiration = setTimeout( =>
-      @_reset_state()
+  _scheduleExpireSession: (tout) ->
+    clearTimeout(@clientTokenExpiration) if @clientTokenExpiration
+    @clientTokenExpiration = setTimeout( =>
+      @_resetState()
     , tout) # Token will expire on the relay
 
-  _ajax: (cmd,data) =>
+  _ajax: (cmd, data) =>
     Utils.ajax "#{@url}/#{cmd}", data
     # TODO update for various implementations or make them provide it extra:
     # .catch e

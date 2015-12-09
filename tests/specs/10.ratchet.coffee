@@ -13,10 +13,10 @@ max_test = 5
 timeout = max_test * 500 # Assuming 500ms roundtrip, increase for remote relays
 
 describe 'Key Ratchet', ->
-  return unless window.__global_test.run_tests['relay ratchet']
+  return unless window.__globalTest.runTests['relay ratchet']
   @timeout(timeout)
 
-  r = new Relay(__global_test.host)
+  r = new Relay(__globalTest.host)
 
   mbx = []
   # create test mailboxes
@@ -38,38 +38,38 @@ describe 'Key Ratchet', ->
   # ---- Simple test ----
   # Each mailbox will send a few msgs to only 1 recepient and they will then
   # move the ratchet one step forward
-  window.__global_test.idx101 = 0
+  window.__globalTest.idx101 = 0
   for k in [0...max_test]
     it "test #{k}", (done) ->
-      return done() if __global_test.offline
-      i = window.__global_test.idx101++
+      return done() if __globalTest.offline
+      i = window.__globalTest.idx101++
       mbx[i].sendToVia('guest0', r, "ratchet #1 #{i}=>g0").done ->
-        mbx[i].relay_send('guest0', "ratchet #2 #{i}=>g0").done ->
-          mbx[i].relay_send('guest0', "ratchet #3 #{i}=>g0").done ->
-            mbx[i].relay_messages().done ->
+        mbx[i].relaySend('guest0', "ratchet #2 #{i}=>g0").done ->
+          mbx[i].relaySend('guest0', "ratchet #3 #{i}=>g0").done ->
+            mbx[i].relayMessages().done ->
               if mbx[i].lastDownload.length > 0
                 for m in mbx[i].lastDownload
                   expect(m.msg).to.contain 'ratchet' if m.msg?
               done()
 
   # get the last messages back
-  window.__global_test.idx102 = 0
+  window.__globalTest.idx102 = 0
   for k in [0...max_test]
     it "download #{k}", (done) ->
-      return done() if __global_test.offline
-      i = window.__global_test.idx102++
+      return done() if __globalTest.offline
+      i = window.__globalTest.idx102++
       mbx[i].getRelayMessages(r).done ->
-        l = mbx[i].relay_nonce_list()
-        mbx[i].relay_delete(l).done ->
+        l = mbx[i].relayNonceList()
+        mbx[i].relayDelete(l).done ->
           done()
 
   # delete mailboxes after a delay to let previous requests complete
-  window.__global_test.idx103 = 0
-  window.__global_test.idx104 = 0
+  window.__globalTest.idx103 = 0
+  window.__globalTest.idx104 = 0
   for k in [0...max_test]
-    j = window.__global_test.idx103++
+    j = window.__globalTest.idx103++
     it "cleanup #{j}", (done) ->
       Utils.delay timeout + 1000, ->
-        i = window.__global_test.idx104++
+        i = window.__globalTest.idx104++
         mbx[i].selfDestruct(true,true)
       done()

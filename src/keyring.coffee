@@ -23,36 +23,36 @@ class KeyRing
     @_loadGuestKeys()
 
   _loadCommKey: ->
-    @comm_key = @getKey 'comm_key'
-    return if @comm_key
-    @comm_key = Nacl.makeKeyPair()
-    @saveKey 'comm_key', @comm_key
+    @commKey = @getKey 'comm_key'
+    return if @commKey
+    @commKey = Nacl.makeKeyPair()
+    @saveKey 'comm_key', @commKey
 
   _loadGuestKeys: ->
     @registry = @storage.get('guest_registry') or []
-    @guest_keys = {}
+    @guestKeys = {}
     for r in @registry
-      @guest_keys[r] = @storage.get("#{r}.guest")
+      @guestKeys[r] = @storage.get("guest[#{r}]")
 
   commFromSeed: (seed) ->
-    @comm_key = Nacl.fromSeed Nacl.encode_utf8 seed
-    @storage.save('comm_key', @comm_key.toString())
+    @commKey = Nacl.fromSeed Nacl.encode_utf8 seed
+    @storage.save('comm_key', @commKey.toString())
 
   commFromSecKey: (rawSecKey) ->
-    @comm_key = Nacl.fromSecretKey rawSecKey
-    @storage.save('comm_key', @comm_key.toString())
+    @commKey = Nacl.fromSecretKey rawSecKey
+    @storage.save('comm_key', @commKey.toString())
 
   tagByHpk: (hpk) ->
-    for own k, v of @guest_keys
+    for own k, v of @guestKeys
       return k if hpk is Nacl.h2(v.fromBase64()).toBase64()
 
   getMasterKey: ->
-    @storage.storage_key.key2str 'key' # to b64 string
+    @storage.storageKey.key2str 'key' # to b64 string
 
   getPubCommKey: ->
-    @comm_key.strPubKey()
+    @commKey.strPubKey()
 
-  saveKey: (tag,key) ->
+  saveKey: (tag, key) ->
     @storage.save(tag, key.toString())
     key
 
@@ -65,7 +65,7 @@ class KeyRing
 
   _addRegistry: (strGuestTag) ->
     return null unless strGuestTag
-    @registry.push(strGuestTag) unless @registry.indexOf(strGuestTag) >- 1
+    @registry.push(strGuestTag) unless @registry.indexOf(strGuestTag) > -1
 
   _saveNewGuest: (tag, pk) ->
     return null unless tag and pk
@@ -76,7 +76,7 @@ class KeyRing
     return null unless tag
     @storage.remove("guest[#{tag}]")
     i = @registry.indexOf tag
-    if i >- 1
+    if i > -1
       @registry.splice(i, 1)
       @storage.save('guest_registry', @registry)
 
@@ -84,30 +84,30 @@ class KeyRing
     return null unless strGuestTag and b64_pk
     b64_pk = b64_pk.trimLines()
     @_addRegistry strGuestTag
-    @guest_keys[strGuestTag] = b64_pk
+    @guestKeys[strGuestTag] = b64_pk
     @_saveNewGuest(strGuestTag, b64_pk)
 
   addTempGuest: (strGuestTag,strPubKey) ->
     return null unless strGuestTag and strPubKey
     strPubKey = strPubKey.trimLines()
-    @guest_keys[strGuestTag] = strPubKey
+    @guestKeys[strGuestTag] = strPubKey
     Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
-      delete @guest_keys[strGuestTag]
+      delete @guestKeys[strGuestTag]
 
   removeGuest: (strGuestTag) ->
-    return null unless strGuestTag and @guest_keys[strGuestTag]
-    @guest_keys[strGuestTag] = null # erase the pointer just in case
-    delete @guest_keys[strGuestTag]
+    return null unless strGuestTag and @guestKeys[strGuestTag]
+    @guestKeys[strGuestTag] = null # erase the pointer just in case
+    delete @guestKeys[strGuestTag]
     @_removeGuestRecord strGuestTag
 
   getGuestKey: (strGuestTag) ->
-    return null unless strGuestTag and @guest_keys[strGuestTag]
+    return null unless strGuestTag and @guestKeys[strGuestTag]
     new Keys
       boxPk: @getGuestRecord(strGuestTag).fromBase64()
 
   getGuestRecord: (strGuestTag) ->
-    return null unless strGuestTag and @guest_keys[strGuestTag]
-    @guest_keys[strGuestTag]
+    return null unless strGuestTag and @guestKeys[strGuestTag]
+    @guestKeys[strGuestTag]
 
   # have to call with overseerAuthorized as true for extra safety
   selfDestruct: (overseerAuthorized) ->
