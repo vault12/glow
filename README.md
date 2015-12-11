@@ -1,6 +1,9 @@
 # Glow [![Build Status](https://travis-ci.org/vault12/glow.svg)](https://travis-ci.org/vault12/glow)
 Glow is a reference client library for interacting with [Zax](https://github.com/vault12/zax), a [NaCl-based Cryptographic Relay](https://s3-us-west-1.amazonaws.com/vault12/zax_infogfx.jpg). You can read the full [technical specification here](http://bit.ly/nacl_relay_spec). This reference implementation is in CoffeeScript. We will add links to other implementations in different languages as they become available.
 
+## Test Dashboard
+ Glow powers a test [Dashboard](https://github.com/vault12/zax-dash) app to provide user-friend access point to given relay internal mailboxes. We maintain live [Test Server](https://zax_test.vault12.com) that runs our latest build. For testing purposes expiration on that relay is set for 30 minutes.
+
 ## Getting Started
 Glow can be easily installed via npm, which is included when you install [Node.js](https://nodejs.org/)
 
