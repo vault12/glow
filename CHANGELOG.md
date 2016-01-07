@@ -1,6 +1,11 @@
+### v1.1.1
+
+* Fixing mailbox seed initialization
+* Creating a minified version  
+
 ### v1.1.0
 
-* Fixng guest persist bug
+* Fixing guest persist bug
 * Fixing js camelcase naming conventions
 
 ### v1.0.9
