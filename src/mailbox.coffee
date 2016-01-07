@@ -29,7 +29,7 @@ class MailBox
   # well-known seed.
   @fromSeed: (seed, id = seed, strMasterKey = null) ->
     mbx = new MailBox(id, strMasterKey)
-    mbx.keyRing.commFromSeed(id)
+    mbx.keyRing.commFromSeed(seed)
     mbx._hpk = null
     return mbx
 
