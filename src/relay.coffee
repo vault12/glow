@@ -163,8 +163,8 @@ class Relay extends EventEmitter
   _scheduleExpireSession: (tout) ->
     clearTimeout(@clientTokenExpiration) if @clientTokenExpiration
     @clientTokenExpiration = setTimeout( =>
-      @emit('clientTokenExpired')
       @_resetState()
+      @emit('sessionExpired')
     , tout) # Token will expire on the relay
 
   _ajax: (cmd, data) =>
