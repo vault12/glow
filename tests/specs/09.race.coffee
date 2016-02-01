@@ -10,7 +10,8 @@ Nacl    = require 'nacl'
 Relay   = require 'relay'
 
 max_test = 50
-timeout = max_test * 500 # Assuming 500ms roundtrip, increase for remote relays
+# Assuming 500ms roundtrip, increase for remote relays
+timeout = max_test * window.__globalTest.timeouts.tiny
 
 describe 'ZAX Race Conditions', ->
   return unless window.__globalTest.runTests['relay race']

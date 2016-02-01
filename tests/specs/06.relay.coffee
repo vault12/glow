@@ -10,7 +10,7 @@ Relay   = require 'relay'
 
 describe 'Relay Ops, low level API', ->
   return unless window.__globalTest.runTests['relay low level']
-  @timeout(500)
+  @timeout(window.__globalTest.timeouts.tiny)
 
   [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
 

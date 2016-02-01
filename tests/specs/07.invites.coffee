@@ -12,7 +12,7 @@ Relay   = require 'relay'
 describe 'Invite codes', ->
   return unless window.__globalTest.runTests['relay invites']
 
-  @timeout(1000)
+  @timeout(window.__globalTest.timeouts.mid)
 
   [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
   [aliceTemp, bobCode] = [null, null]

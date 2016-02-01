@@ -11,7 +11,7 @@ Utils   = require 'utils'
 
 describe 'Relay Bulk Ops', ->
   return unless window.__globalTest.runTests['relay bulk']
-  @timeout(1000)
+  @timeout(window.__globalTest.timeouts.mid)
 
   [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
 

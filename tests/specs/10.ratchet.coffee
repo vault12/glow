@@ -10,7 +10,8 @@ Relay   = require 'relay'
 Utils   = require 'utils'
 
 max_test = 5
-timeout = max_test * 500 # Assuming 500ms roundtrip, increase for remote relays
+# Assuming 500ms roundtrip, increase for remote relays
+timeout = max_test * window.__globalTest.timeouts.tiny
 
 describe 'Key Ratchet', ->
   return unless window.__globalTest.runTests['relay ratchet']

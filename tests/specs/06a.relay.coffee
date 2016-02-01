@@ -10,7 +10,7 @@ Relay   = require 'relay'
 
 describe 'Relay Ops, wrapper API', ->
   return unless window.__globalTest.runTests['relay wrapper']
-  @timeout(500)
+  @timeout(window.__globalTest.timeouts.tiny)
 
   [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
   Alice.keyRing.addGuest('Bob', Bob.getPubCommKey())

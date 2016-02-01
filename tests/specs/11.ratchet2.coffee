@@ -19,8 +19,7 @@ describe 'Ratchet With Noise', ->
   # For now it runs standard ratchet test sending
   # messages between random mailboxes
 
-  @timeout(5000)
-  # @timeout(10000) # if you are far from relay
+  @timeout(window.__globalTest.timeouts.long)
 
   return done() if __globalTest.offline
   r = new Relay(__globalTest.host)

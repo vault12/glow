@@ -13,7 +13,7 @@ Utils   = require 'utils'
 # ----- Communication Relay: Start session -----
 describe 'Relay Session', ->
   return unless window.__globalTest.runTests['relay session']
-  @timeout(5000)
+  @timeout(window.__globalTest.timeouts.long)
 
   [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
 

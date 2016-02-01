@@ -13,7 +13,8 @@ Relay   = require 'relay'
 # sessions to stress test the relay
 # max_test = 50
 max_test = 5
-timeout = max_test * 500 # Assuming 500ms roundtrip, increase for remote relays
+# Assuming 500ms roundtrip, increase for remote relays
+timeout = max_test * window.__globalTest.timeouts.tiny
 
 describe 'Stress Test', ->
   return unless window.__globalTest.runTests['relay stress']
