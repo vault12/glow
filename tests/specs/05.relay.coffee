@@ -63,6 +63,15 @@ describe 'Relay Session', ->
         expect(Alice.sessionKeys).not.empty
         done()
 
+  it 'emits session expired event', (done)->
+    rt = Config.RELAY_TOKEN_TIMEOUT
+    Config.RELAY_TOKEN_TIMEOUT = 1
+    r = new Relay(__globalTest.host)
+    r.on 'sessionExpired', ->
+      Config.RELAY_TOKEN_TIMEOUT = rt
+      done()
+    r.openConnection().done ->
+
   it 'clear mailboxes', (done) ->
     Alice.selfDestruct(true)
     Bob.selfDestruct(true)

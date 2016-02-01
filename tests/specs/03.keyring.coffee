@@ -7,6 +7,7 @@ expect  = require('chai').expect
 KeyRing = require 'keyring'
 MailBox = require 'mailbox'
 Nacl    = require 'nacl'
+Config  = require 'config'
 
 # ----- Keyring with guest keys -----
 describe 'KeyRing with keys', ->
@@ -107,6 +108,15 @@ describe 'KeyRing with keys', ->
     expect(keyA).is.not.null
     expect(keyB).is.not.null
     expect(keyA.toString()).equal(keyB.toString())
+
+  it 'emits guest timeout event', (done)->
+    st = Config.RELAY_SESSION_TIMEOUT
+    Config.RELAY_SESSION_TIMEOUT = 1
+    k1.on 'tempGuestTimeout', ->
+      expect(k1.getGuestKey('TmpAlice')).is.null
+      Config.RELAY_SESSION_TIMEOUT = st
+      done()
+    k1.addTempGuest('TmpAlice', '123')
 
   it 'clean up storage', ->
     for r in [r1, r2, spectre, jb, k1]

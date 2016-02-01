@@ -7,6 +7,7 @@ expect  = require('chai').expect
 MailBox = require 'mailbox'
 Nacl    = require 'nacl'
 Relay   = require 'relay'
+Config  = require 'config'
 
 # ----- Communication MailBox -----
 describe 'MailBox, offline Relay', ->
@@ -57,6 +58,14 @@ describe 'MailBox, offline Relay', ->
     m2 = Alice.decodeMessage('Bob_mbx', msg2.nonce, msg2.ctext)
     pt1.should.equal(m1)
     pt2.should.equal(m2)
+
+  it 'emits session timeout event', (done)->
+    st = Config.RELAY_SESSION_TIMEOUT
+    Config.RELAY_SESSION_TIMEOUT = 1
+    Alice.on 'sessionTimeout', ->
+      Config.RELAY_SESSION_TIMEOUT = st
+      done()
+    Alice.createSessionKey('session_id_123')
 
   it 'clear mailboxes', ->
     Alice.selfDestruct(true)
