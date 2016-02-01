@@ -1,11 +1,12 @@
 # Copyright (c) 2015 Vault12, Inc.
 # MIT License https://opensource.org/licenses/MIT
-Config = require 'config'
-Keys = require 'keys'
-Nacl = require 'nacl'
-Utils = require 'utils'
+Config       = require 'config'
+Keys         = require 'keys'
+Nacl         = require 'nacl'
+Utils        = require 'utils'
+EventEmitter = require('events').EventEmitter
 
-class Relay
+class Relay extends EventEmitter
   # skip url for offline testing
   constructor: (@url = null) ->
     @_resetState() # until a succesful handshake
@@ -162,6 +163,7 @@ class Relay
   _scheduleExpireSession: (tout) ->
     clearTimeout(@clientTokenExpiration) if @clientTokenExpiration
     @clientTokenExpiration = setTimeout( =>
+      @emit('clientTokenExpired')
       @_resetState()
     , tout) # Token will expire on the relay
 

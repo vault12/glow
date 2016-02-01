@@ -4,9 +4,10 @@ Config        = require 'config'
 KeyRing       = require 'keyring'
 Nacl          = require 'nacl'
 Utils         = require 'utils'
+EventEmitter  = require('events').EventEmitter
 
 # Mailbox service to connect with the Zax relay service
-class MailBox
+class MailBox extends EventEmitter
 
   # Creates a new client Mailbox that will represent an hpk mailbox on the
   # relay. You can provide a friendly unique name to represent that Mailbox as
@@ -69,6 +70,8 @@ class MailBox
 
       @sessionRelay[sess_id] = null
       delete @sessionRelay[sess_id]
+
+      @emit('sessionTimeout')
 
     return @sessionKeys[sess_id]
 

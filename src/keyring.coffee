@@ -1,13 +1,14 @@
 # Copyright (c) 2015 Vault12, Inc.
 # MIT License https://opensource.org/licenses/MIT
-Config           = require 'config'
+Config        = require 'config'
 CryptoStorage = require 'crypto_storage'
 Keys          = require 'keys'
 Nacl          = require 'nacl'
 Utils         = require 'utils'
+EventEmitter  = require('events').EventEmitter
 
 # Manages the public keys of correspondents
-class KeyRing
+class KeyRing extends EventEmitter
   # storage master key arrives from HW storage
   constructor: (id, strMasterKey = null) ->
     if strMasterKey
@@ -93,6 +94,8 @@ class KeyRing
     @guestKeys[strGuestTag] = strPubKey
     Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
       delete @guestKeys[strGuestTag]
+      @emit 'tempGuestTimeout',
+        strGuestTag: strGuestTag
 
   removeGuest: (strGuestTag) ->
     return null unless strGuestTag and @guestKeys[strGuestTag]
