@@ -75,7 +75,7 @@ class Relay extends EventEmitter
     throw new Error('connectMailbox - missing params') unless mbx? and @online and @relayKey? and @url?
     @lastError = null
 
-    relayId = "relay_#{@url}"
+    relayId = "relay_#{@url}" # also used in MailBox.isConnectedToRelay()
     clientTemp = mbx.createSessionKey(relayId).boxPk
     mbx.keyRing.addTempGuest relayId, @relayKey.strPubKey()
     delete @relayKey # now it belongs to the mailbox
@@ -98,6 +98,9 @@ class Relay extends EventEmitter
       "#{outer.ctext}")
     .then (d)=>
       # console.log "#{@url} => #{d} messages"
+      # return relayId, the mailbox emits 'sessionTimeout'
+      # with that relayId (sess_id) as a parameter.
+      relayId
 
   runCmd: (cmd, mbx, params = null) ->
     throw new Error('runCmd - missing params') unless cmd? and mbx?

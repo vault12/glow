@@ -71,9 +71,16 @@ class MailBox extends EventEmitter
       @sessionRelay[sess_id] = null
       delete @sessionRelay[sess_id]
 
-      @emit('sessionTimeout')
+      @emit('sessionTimeout', sess_id)
 
     return @sessionKeys[sess_id]
+
+  # Locally determine whether Relay.connectMailbox() needs to be called
+  isConnectedToRelay: (relay = @lastRelay) ->
+    throw new Error('relayDelete - no open relay') unless relay
+    @lastRelay = relay
+    relayId = "relay_#{relay.url}" # also used in Relay.connectMailbox()
+    return !!@sessionRelay[relayId]
 
   # --- Low level encoding/decoding ---
 
@@ -135,7 +142,7 @@ class MailBox extends EventEmitter
   # messages and download meta-data about those messages.
   getRelayMessages: (relay) ->
     @connectToRelay(relay).then =>
-      @relayMessages()
+      @relayMessages(relay)
 
   # --- Established communication functions ---
   # Once a connection with a relay is established there is no need to create
@@ -143,48 +150,54 @@ class MailBox extends EventEmitter
   # using previously established connections to a relay stored in @lastRelay
 
   # Gets pending messages count and stores it in @count
-  relayCount: ->
-    throw new Error('relayCount - no open relay') unless @lastRelay
-    @lastRelay.count(@).then =>
-      @count = parseInt @lastRelay.result
+  relayCount: (relay = @lastRelay) ->
+    throw new Error('relayCount - no open relay') unless relay
+    @lastRelay = relay
+    relay.count(@).then =>
+      @count = parseInt relay.result
 
   # Sends a free-form object to a guest whose keys we already have in our
   # keyring via @lastRelay
-  relaySend: (guest, msg) ->
-    throw new Error('mbx: relaySend - no open relay') unless @lastRelay
+  relaySend: (guest, msg, relay = @lastRelay) ->
+    throw new Error('mbx: relaySend - no open relay') unless relay
+    @lastRelay = relay
     encMsg = @encodeMessage(guest, msg)
     @lastMsg = encMsg
-    @lastRelay.upload(@, Nacl.h2(@_gPk guest), encMsg)
+    relay.upload(@, Nacl.h2(@_gPk guest), encMsg)
 
   # Downloads pending relay messages into @lastDownload
-  relayMessages: ->
-    throw new Error('relayMessages - no open relay') unless @lastRelay
-    @lastRelay.download(@).then =>
-      @lastDownload = []
-      for emsg in @lastRelay.result
+  relayMessages: (relay = @lastRelay) ->
+    throw new Error('relayMessages - no open relay') unless relay
+    @lastRelay = relay
+    relay.download(@).then =>
+      download = []
+      for emsg in relay.result
         if (tag = @keyRing.tagByHpk emsg.from)
           emsg['fromTag'] = tag
           emsg['msg'] = @decodeMessage tag, emsg.nonce, emsg.data
           delete emsg.data if emsg['msg']?
-        @lastDownload.push emsg
+        download.push emsg
+      @lastDownload = download
+      download
 
   # If @downloadMeta has been populated by previous calls, this maps the list
   # of nonces of current messages on the relay. Since nonces are forced to be
   # unique, they are used as global message ids for a given mailbox
-  relayNonceList: ->
-    throw new Error('relayNonceList - no metadata') unless @lastDownload
-    Utils.map @lastDownload, (i) -> i.nonce
+  relayNonceList: (download = @lastDownload) ->
+    throw new Error('relayNonceList - no metadata') unless download
+    Utils.map download, (i) -> i.nonce
 
   # Deletes messages from the relay given a list of message nonces.
-  relayDelete: (list) ->
-    throw new Error('relayDelete - no open relay') unless @lastRelay
-    @lastRelay.delete(@, list)
+  relayDelete: (list, relay = @lastRelay) ->
+    throw new Error('relayDelete - no open relay') unless relay
+    @lastRelay = relay
+    relay.delete(@, list)
 
   # Calls @relayDelete @relayNonceList: deletes up to the first 100 messages
   # from the relay for a given mailbox.
   clean: (r) ->
-    @getRelayMessages(r).then =>
-      @relayDelete(@relayNonceList())
+    @getRelayMessages(r).then (download)=>
+      @relayDelete(@relayNonceList(download), r)
 
   # Deletes a Mailbox and all its data from local CryptoStorage. This is a very
   # destructive operation, use with caution - it will also delete the Mailbox
