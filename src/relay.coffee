@@ -38,7 +38,7 @@ class Relay extends EventEmitter
       @relayToken = lines[0].fromBase64()
       @diff = if lines.length is 2 then parseInt(lines[1]) else 0
 
-      @_scheduleExpireSession Config.RELAY_TOKEN_TIMEOUT
+      @_scheduleExpireSession()
       # Will remove after token expires on relay
       if @diff > 4
         console.log "Relay #{@url} requested difficulty #{@diff}. Session handshake may take longer."
@@ -162,13 +162,20 @@ class Relay extends EventEmitter
     @relayToken = null
     @relayKey = null
     @clientTokenExpiration = null
+    @clientTokenExpirationStart = 0
 
-  _scheduleExpireSession: (tout) ->
+  # Allows for preemptive session renewal to avoid
+  # timeouts in the middle of a relay check
+  timeToTokenExpiration: ->
+    Math.max(Config.RELAY_TOKEN_TIMEOUT - (Date.now() - @clientTokenExpirationStart), 0)
+
+  _scheduleExpireSession: ->
     clearTimeout(@clientTokenExpiration) if @clientTokenExpiration
+    @clientTokenExpirationStart = Date.now()
     @clientTokenExpiration = setTimeout( =>
       @_resetState()
       @emit('relaytokentimeout')
-    , tout) # Token will expire on the relay
+    , Config.RELAY_TOKEN_TIMEOUT) # Token will expire on the relay
 
   _ajax: (cmd, data) =>
     Utils.ajax "#{@url}/#{cmd}", data
