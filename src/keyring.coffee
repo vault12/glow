@@ -34,6 +34,7 @@ class KeyRing extends EventEmitter
     @guestKeys = {}
     for r in @registry
       @guestKeys[r] = @storage.get("guest[#{r}]")
+    @guestKeyTimeouts = {}
 
   commFromSeed: (seed) ->
     @commKey = Nacl.fromSeed Nacl.encode_utf8 seed
@@ -92,10 +93,12 @@ class KeyRing extends EventEmitter
     return null unless strGuestTag and strPubKey
     strPubKey = strPubKey.trimLines()
     @guestKeys[strGuestTag] = strPubKey
-    Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
+    if @guestKeyTimeouts[strGuestTag]
+      clearTimeout @guestKeyTimeouts[strGuestTag]
+    @guestKeyTimeouts[strGuestTag] = Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
       delete @guestKeys[strGuestTag]
-      @emit 'tempGuestTimeout',
-        strGuestTag: strGuestTag
+      delete @guestKeyTimeouts[strGuestTag]
+      @emit 'tmpguesttimeout', strGuestTag
 
   removeGuest: (strGuestTag) ->
     return null unless strGuestTag and @guestKeys[strGuestTag]
