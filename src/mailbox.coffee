@@ -71,7 +71,7 @@ class MailBox extends EventEmitter
       @sessionRelay[sess_id] = null
       delete @sessionRelay[sess_id]
 
-      @emit('sessionTimeout', sess_id)
+      @emit('relaysessiontimeout', sess_id)
 
     return @sessionKeys[sess_id]
 
@@ -80,7 +80,7 @@ class MailBox extends EventEmitter
     throw new Error('relayDelete - no open relay') unless relay
     @lastRelay = relay
     relayId = "relay_#{relay.url}" # also used in Relay.connectMailbox()
-    return !!@sessionRelay[relayId]
+    return !!@sessionKeys[relayId]
 
   # --- Low level encoding/decoding ---
 
