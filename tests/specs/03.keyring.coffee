@@ -112,7 +112,7 @@ describe 'KeyRing with keys', ->
   it 'emits guest timeout event', (done)->
     st = Config.RELAY_SESSION_TIMEOUT
     Config.RELAY_SESSION_TIMEOUT = 1
-    k1.on 'tempGuestTimeout', ->
+    k1.on 'tmpguesttimeout', ->
       expect(k1.getGuestKey('TmpAlice')).is.null
       Config.RELAY_SESSION_TIMEOUT = st
       done()

@@ -67,7 +67,7 @@ describe 'Relay Session', ->
     rt = Config.RELAY_TOKEN_TIMEOUT
     Config.RELAY_TOKEN_TIMEOUT = 1
     r = new Relay(__globalTest.host)
-    r.on 'sessionExpired', ->
+    r.on 'relaytokentimeout', ->
       Config.RELAY_TOKEN_TIMEOUT = rt
       done()
     r.openConnection().done ->

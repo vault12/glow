@@ -62,7 +62,7 @@ describe 'MailBox, offline Relay', ->
   it 'emits session timeout event', (done)->
     st = Config.RELAY_SESSION_TIMEOUT
     Config.RELAY_SESSION_TIMEOUT = 1
-    Alice.on 'sessionTimeout', ->
+    Alice.on 'relaysessiontimeout', ->
       Config.RELAY_SESSION_TIMEOUT = st
       done()
     Alice.createSessionKey('session_id_123')
