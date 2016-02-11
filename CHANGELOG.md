@@ -1,3 +1,8 @@
+### v1.1.2
+
+* Added easily configurable timeouts for remote vs local testing
+* Added expiration events to 3 code points, using node/browserify EventEmitter class
+
 ### v1.1.1
 
 * Fixing mailbox seed initialization
