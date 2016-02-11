@@ -36,7 +36,7 @@ if localStorage
 # instructions at https://github.com/vault12/zax#installation
 
 # select a preset (local vs remote) or edit your own settings
-localTest = true
+localTest = false
 
 if localTest
   # local testing
