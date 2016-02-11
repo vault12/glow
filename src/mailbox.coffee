@@ -23,7 +23,6 @@ class MailBox extends EventEmitter
   constructor: (@identity, strMasterKey = null) ->
     @keyRing = new KeyRing(@identity, strMasterKey)
     @sessionKeys = {}
-    @sessionRelay = {}
     @sessionTimeout = {}
 
   # You can create a Mailbox where the secret identity key is derived from a
@@ -54,26 +53,38 @@ class MailBox extends EventEmitter
   getPubCommKey: ->
     @keyRing.getPubCommKey()
 
+  # Allows for preemptive session renewal to avoid
+  # timeouts in the middle of a relay check
+  timeToSessionExpiration: (sess_id)->
+    session = @sessionTimeout[sess_id]
+    if !session
+      return 0
+    Math.max(Config.RELAY_SESSION_TIMEOUT - (Date.now() - session.startTime), 0)
+
   # Each session with each Zax Relay creates its own temporary session keys
   createSessionKey: (sess_id) ->
     throw new Error('createSessionKey - no sess_id') unless sess_id
     return @sessionKeys[sess_id] if @sessionKeys[sess_id]?
+
+    # cancel the previous timer to prevent erase of a newly created session key
+    # if createSessionKey() is called repeatedly with the same sess_id
+    if @sessionTimeout[sess_id]
+      clearTimeout @sessionTimeout[sess_id].timeoutId
+
     @sessionKeys[sess_id] = Nacl.makeKeyPair()
-
     # Remove key material after it expires on the relay
-    @sessionTimeout[sess_id] = Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
-      @sessionKeys[sess_id] = null
-      delete @sessionKeys[sess_id]
-
-      @sessionTimeout[sess_id] = null
-      delete @sessionTimeout[sess_id]
-
-      @sessionRelay[sess_id] = null
-      delete @sessionRelay[sess_id]
-
-      @emit('relaysessiontimeout', sess_id)
+    @sessionTimeout[sess_id] =
+      timeoutId: Utils.delay Config.RELAY_SESSION_TIMEOUT, => @_clearSession(sess_id)
+      startTime: Date.now()
 
     return @sessionKeys[sess_id]
+
+  _clearSession: (sess_id)->
+    @sessionKeys[sess_id] = null
+    delete @sessionKeys[sess_id]
+    @sessionTimeout[sess_id] = null
+    delete @sessionTimeout[sess_id]
+    @emit('relaysessiontimeout', sess_id)
 
   # Locally determine whether Relay.connectMailbox() needs to be called
   isConnectedToRelay: (relay = @lastRelay) ->

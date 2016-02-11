@@ -31,15 +31,22 @@ class Relay extends EventEmitter
     if @clientToken and @clientToken.length isnt Config.RELAY_TOKEN_LEN
       throw new Error("Token must be #{Config.RELAY_TOKEN_LEN} bytes")
 
+    # avoid resetting the @clientToken in case the following ajax call takes
+    # a longer time to complete
+    clearTimeout(@clientTokenExpiration) if @clientTokenExpiration
+
     @_ajax('start_session', @clientToken.toBase64()).then (data) =>
+      # Will remove after token expires on relay
+      # Call before assigning @relayToken to prevent accidental
+      # reset of the newly assigned value.
+      @_scheduleExpireSession()
+
       # relay responds with its own counter token. Until session is
       # established these 2 tokens are handshake id.
       lines = @_processData data
       @relayToken = lines[0].fromBase64()
       @diff = if lines.length is 2 then parseInt(lines[1]) else 0
 
-      @_scheduleExpireSession()
-      # Will remove after token expires on relay
       if @diff > 4
         console.log "Relay #{@url} requested difficulty #{@diff}. Session handshake may take longer."
       if @diff > 16
@@ -98,7 +105,7 @@ class Relay extends EventEmitter
       "#{outer.ctext}")
     .then (d)=>
       # console.log "#{@url} => #{d} messages"
-      # return relayId, the mailbox emits 'sessionTimeout'
+      # return relayId, the mailbox emits 'relaysessiontimeout'
       # with that relayId (sess_id) as a parameter.
       relayId
 
@@ -164,10 +171,15 @@ class Relay extends EventEmitter
     @clientTokenExpiration = null
     @clientTokenExpirationStart = 0
 
-  # Allows for preemptive session renewal to avoid
+  # Allows for preemptive client token renewal to avoid
   # timeouts in the middle of a relay check
   timeToTokenExpiration: ->
     Math.max(Config.RELAY_TOKEN_TIMEOUT - (Date.now() - @clientTokenExpirationStart), 0)
+
+  # Allows for preemptive mailbox session renewal to avoid
+  # timeouts in the middle of a relay check
+  timeToSessionExpiration: (mbx)->
+    mbx.timeToSessionExpiration("relay_#{@url}")
 
   _scheduleExpireSession: ->
     clearTimeout(@clientTokenExpiration) if @clientTokenExpiration
