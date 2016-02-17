@@ -1,3 +1,8 @@
+### v1.1.3
+
+* Updated relay token timeout
+* Updated relay session timeout
+
 ### v1.1.2
 
 * Added easily configurable timeouts for remote vs local testing
