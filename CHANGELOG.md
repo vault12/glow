@@ -1,3 +1,8 @@
+### v1.1.4
+
+* Force new session key
+* Error msg fix
+
 ### v1.1.3
 
 * Updated relay token timeout
