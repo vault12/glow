@@ -62,9 +62,9 @@ class MailBox extends EventEmitter
     Math.max(Config.RELAY_SESSION_TIMEOUT - (Date.now() - session.startTime), 0)
 
   # Each session with each Zax Relay creates its own temporary session keys
-  createSessionKey: (sess_id) ->
+  createSessionKey: (sess_id, forceNew = false) ->
     throw new Error('createSessionKey - no sess_id') unless sess_id
-    return @sessionKeys[sess_id] if @sessionKeys[sess_id]?
+    return @sessionKeys[sess_id] if not forceNew and @sessionKeys[sess_id]
 
     # cancel the previous timer to prevent erase of a newly created session key
     # if createSessionKey() is called repeatedly with the same sess_id
@@ -88,7 +88,7 @@ class MailBox extends EventEmitter
 
   # Locally determine whether Relay.connectMailbox() needs to be called
   isConnectedToRelay: (relay = @lastRelay) ->
-    throw new Error('relayDelete - no open relay') unless relay
+    throw new Error('isConnectedToRelay - no open relay') unless relay
     @lastRelay = relay
     relayId = "relay_#{relay.url}" # also used in Relay.connectMailbox()
     return !!@sessionKeys[relayId]

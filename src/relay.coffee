@@ -83,7 +83,7 @@ class Relay extends EventEmitter
     @lastError = null
 
     relayId = "relay_#{@url}" # also used in MailBox.isConnectedToRelay()
-    clientTemp = mbx.createSessionKey(relayId).boxPk
+    clientTemp = mbx.createSessionKey(relayId, true).boxPk
     mbx.keyRing.addTempGuest relayId, @relayKey.strPubKey()
     delete @relayKey # now it belongs to the mailbox
 
