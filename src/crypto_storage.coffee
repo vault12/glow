@@ -3,9 +3,14 @@
 Config = require 'config'
 Keys = require 'keys'
 Nacl = require 'nacl'
+Utils = require 'utils'
 
 # Secure local storage
 class CryptoStorage
+
+  # Construction:
+  # CryptoStorage.new(..params..).then (storage)=>
+  #   storage is ready to be used here
 
   _storageDriver: null
 
@@ -16,18 +21,21 @@ class CryptoStorage
 
   # Changing roots allows different versions to keep separate storage areas
   # Returns a Promise
-  new: (@storageKey = null, r = null)->
-    @root = if r then ".#{r}#{Config._DEF_ROOT}" else Config._DEF_ROOT
+  @new: (storageKey = null, r = null)->
+    cs = new CryptoStorage
+    cs.storageKey = storageKey
+    cs.root = if r then ".#{r}#{Config._DEF_ROOT}" else Config._DEF_ROOT
     next = Utils.resolve()
     # TODO: move storage key to hw and provide it in ctor call
-    unless @storageKey
+    unless cs.storageKey
       next = next.then =>
-        @_loadKey()
+        cs._loadKey()
     # If we don't have a loaded storageKey, make a new one
-    unless @storageKey
+    unless cs.storageKey
       next = next.then =>
-        @newKey()
-    next
+        cs.newKey()
+    next.then =>
+      cs
 
   # Returns a Promise
   _saveKey: ->

@@ -10,18 +10,24 @@ EventEmitter  = require('events').EventEmitter
 # Manages the public keys of correspondents
 class KeyRing extends EventEmitter
 
+  # Construction:
+  # KeyRing.new(..params..).then (kr)=>
+  #   kr is ready to be used here
+
   # storage master key arrives from HW storage
   # Returns a Promise
-  new: (id, strMasterKey = null)->
+  @new: (id, strMasterKey = null)->
+    kr = new KeyRing
     if strMasterKey
-      key = Keys.fromString strMasterKey
+      key = Keys.fromString(strMasterKey)
       next = CryptoStorage.new(key, id).then (storage)=>
-        @storage = storage
-    if !@storage
+        kr.storage = storage
+    else
       next = CryptoStorage.new(null, id).then (storage)=>
-        @storage = storage
+        kr.storage = storage
     next.then =>
-      @_ensureKeys()
+      kr._ensureKeys().then =>
+        kr
 
   # make sure we have all basic keys created
   # Returns a Promise
