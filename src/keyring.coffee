@@ -9,88 +9,127 @@ EventEmitter  = require('events').EventEmitter
 
 # Manages the public keys of correspondents
 class KeyRing extends EventEmitter
+
   # storage master key arrives from HW storage
-  constructor: (id, strMasterKey = null) ->
+  # Returns a Promise
+  new: (id, strMasterKey = null)->
     if strMasterKey
       key = Keys.fromString strMasterKey
-      @storage = new CryptoStorage(key, id)
-
-    @storage = new CryptoStorage(null, id) unless @storage
-    @_ensureKeys()
+      next = CryptoStorage.new(key, id).then (storage)=>
+        @storage = storage
+    if !@storage
+      next = CryptoStorage.new(null, id).then (storage)=>
+        @storage = storage
+    next.then =>
+      @_ensureKeys()
 
   # make sure we have all basic keys created
+  # Returns a Promise
   _ensureKeys: ->
-    @_loadCommKey()
-    @_loadGuestKeys()
+    @_loadCommKey().then =>
+      @_loadGuestKeys()
 
+  # Returns a Promise
   _loadCommKey: ->
-    @commKey = @getKey 'comm_key'
-    return if @commKey
-    @commKey = Nacl.makeKeyPair()
-    @saveKey 'comm_key', @commKey
+    @getKey('comm_key').then (commKey)=>
+      @commKey = commKey
+      return if @commKey
+      Nacl.makeKeyPair().then (commKey)=>
+        @commKey = commKey
+        @saveKey('comm_key', @commKey)
 
+  # Returns a Promise
   _loadGuestKeys: ->
-    @registry = @storage.get('guest_registry') or []
-    @guestKeys = {}
+    @storage.get('guest_registry').then (registry)=>
+      @registry = registry or []
+      @guestKeys = {} # tag -> { pk, hpk }
+      @guestKeyTimeouts = {}
+    next = Utils.resolve()
     for r in @registry
-      @guestKeys[r] = @storage.get("guest[#{r}]")
-    @guestKeyTimeouts = {}
+      next = next.then =>
+        @storage.get("guest[#{r}]").then (val)=>
+          @guestKeys[r] = val
+    next
 
-  commFromSeed: (seed) ->
-    @commKey = Nacl.fromSeed Nacl.encode_utf8 seed
-    @storage.save('comm_key', @commKey.toString())
+  # Returns a Promise
+  commFromSeed: (seed)->
+    Nacl.encode_utf8(seed).then (encoded)=>
+      Nacl.fromSeed(encoded).then (commKey)=>
+        @commKey = commKey
+        @storage.save('comm_key', @commKey.toString())
 
-  commFromSecKey: (rawSecKey) ->
+  # Returns a Promise
+  commFromSecKey: (rawSecKey)->
     @commKey = Nacl.fromSecretKey rawSecKey
     @storage.save('comm_key', @commKey.toString())
 
-  tagByHpk: (hpk) ->
+  # Synchronous
+  tagByHpk: (hpk)->
     for own k, v of @guestKeys
-      return k if hpk is Nacl.h2(v.fromBase64()).toBase64()
+      return k if hpk is v.hpk
+    null
 
+  # Synchronous
   getMasterKey: ->
-    @storage.storageKey.key2str 'key' # to b64 string
+    @storage.storageKey.key2str('key') # to b64 string
 
+  # Synchronous
   getPubCommKey: ->
     @commKey.strPubKey()
 
-  saveKey: (tag, key) ->
-    @storage.save(tag, key.toString())
-    key
+  # Returns a Promise
+  saveKey: (tag, key)->
+    @storage.save(tag, key.toString()).then ->
+      key
 
-  getKey: (tag) ->
-    k = @storage.get(tag)
-    if k then Keys.fromString k else null
+  # Returns a Promise
+  getKey: (tag)->
+    @storage.get(tag).then (k)->
+      if k then Keys.fromString(k) else null
 
-  deleteKey: (tag) ->
-    @storage.remove tag
+  # Returns a Promise
+  deleteKey: (tag)->
+    @storage.remove(tag)
 
-  _addRegistry: (strGuestTag) ->
-    return null unless strGuestTag
+  # Synchronous
+  _addRegistry: (strGuestTag)->
+    Utils.ensure(strGuestTag)
     @registry.push(strGuestTag) unless @registry.indexOf(strGuestTag) > -1
 
-  _saveNewGuest: (tag, pk) ->
-    return null unless tag and pk
-    @storage.save("guest[#{tag}]", pk)
-    @storage.save('guest_registry', @registry)
-
-  _removeGuestRecord: (tag) ->
-    return null unless tag
-    @storage.remove("guest[#{tag}]")
-    i = @registry.indexOf tag
-    if i > -1
-      @registry.splice(i, 1)
+  # Returns a Promise
+  _saveNewGuest: (tag, pk)->
+    Utils.ensure(tag and pk)
+    @storage.save("guest[#{tag}]", pk).then =>
       @storage.save('guest_registry', @registry)
 
-  addGuest: (strGuestTag, b64_pk) ->
-    return null unless strGuestTag and b64_pk
+  # Returns a Promise
+  _removeGuestRecord: (tag)->
+    Utils.ensure(tag)
+    @storage.remove("guest[#{tag}]").then =>
+      i = @registry.indexOf tag
+      if i > -1
+        @registry.splice(i, 1)
+        @storage.save('guest_registry', @registry)
+
+  # Returns a Promise
+  addGuest: (strGuestTag, b64_pk)->
+    Utils.ensure(strGuestTag and b64_pk)
     b64_pk = b64_pk.trimLines()
     @_addRegistry strGuestTag
-    @guestKeys[strGuestTag] = b64_pk
-    @_saveNewGuest(strGuestTag, b64_pk)
+    @_addGuestRecord(strGuestTag, b64_pk).then (guest)=>
+      @_saveNewGuest(strGuestTag, guest)
 
-  addTempGuest: (strGuestTag,strPubKey) ->
-    return null unless strGuestTag and strPubKey
+  # Returns a Promise
+  _addGuestRecord: (strGuestTag, b64_pk)->
+    Utils.ensure(strGuestTag, b64_pk)
+    Nacl.h2(b64_pk.fromBase64()).then (h2)=>
+      @guestKeys[strGuestTag] =
+        pk: b64_pk
+        hpk: h2.toBase64()
+
+  # Synchronous
+  addTempGuest: (strGuestTag,strPubKey)->
+    Utils.ensure(strGuestTag and strPubKey)
     strPubKey = strPubKey.trimLines()
     @guestKeys[strGuestTag] = strPubKey
     if @guestKeyTimeouts[strGuestTag]
@@ -100,29 +139,33 @@ class KeyRing extends EventEmitter
       delete @guestKeyTimeouts[strGuestTag]
       @emit 'tmpguesttimeout', strGuestTag
 
-  removeGuest: (strGuestTag) ->
-    return null unless strGuestTag and @guestKeys[strGuestTag]
+  # Returns a Promise
+  removeGuest: (strGuestTag)->
+    Utils.ensure(strGuestTag and @guestKeys[strGuestTag])
     @guestKeys[strGuestTag] = null # erase the pointer just in case
     delete @guestKeys[strGuestTag]
     @_removeGuestRecord strGuestTag
 
-  getGuestKey: (strGuestTag) ->
-    return null unless strGuestTag and @guestKeys[strGuestTag]
+  # Synchronous
+  getGuestKey: (strGuestTag)->
+    Utils.ensure(strGuestTag and @guestKeys[strGuestTag])
     new Keys
       boxPk: @getGuestRecord(strGuestTag).fromBase64()
 
-  getGuestRecord: (strGuestTag) ->
-    return null unless strGuestTag and @guestKeys[strGuestTag]
-    @guestKeys[strGuestTag]
+  # Synchronous
+  getGuestRecord: (strGuestTag)->
+    Utils.ensure(strGuestTag and @guestKeys[strGuestTag])
+    @guestKeys[strGuestTag].pk
 
   # have to call with overseerAuthorized as true for extra safety
-  selfDestruct: (overseerAuthorized) ->
-    return null unless overseerAuthorized
+  # Returns a Promise
+  selfDestruct: (overseerAuthorized)->
+    Utils.ensure(overseerAuthorized)
     rcopy = @registry.slice()
     @removeGuest g for g in rcopy
-    @storage.remove 'guest_registry'
-    @storage.remove 'comm_key'
-    @storage.selfDestruct(overseerAuthorized)
+    @storage.remove('guest_registry').then =>
+      @storage.remove('comm_key').then =>
+        @storage.selfDestruct(overseerAuthorized)
 
 module.exports = KeyRing
 window.KeyRing = KeyRing if window.__CRYPTO_DEBUG

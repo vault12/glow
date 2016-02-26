@@ -6,7 +6,9 @@
 Config = require 'config'
 
 class Utils
+
   # --- Mixins ---
+
   # Wraps http://zeptojs.com/#$.extend - provided so that you can swap
   # zepto for another js library that doesn't have the same extend behavior.
   # Uses default impl if $.extend not available.
@@ -37,55 +39,96 @@ class Utils
     Object::toString.call(obj)
       .replace('[', '').replace(']', '').split(' ')[1]
 
+  # --- Ajax ---
+
   @ajaxImpl: null
 
+  # see: Main.setAjaxImpl()
   @setAjaxImpl: (ajaxImpl)->
     @ajaxImpl = ajaxImpl
 
   # wraps http://zeptojs.com/#$.ajax - provided so that if you can swap
   # zepto for another js library that doesn't have the same ajax behavior
   @ajax: (url, data) ->
-
-    # no ajax impl set?
-    if @ajaxImpl is null
-      # try to auto-set some default implementations here, if present
-
-      # set the impl to q-xhr if present
-      if Q?.xhr
-        # console.log 'default ajax impl: setting to q-xhr'
-        @setAjaxImpl (url, data)->
-          Q.xhr
-            method: 'POST'
-            url: url
-            headers:
-              'Accept': 'text/plain'
-              'Content-Type': 'text/plain'
-            data: data
-            responseType: 'text'
-            timeout: Config.RELAY_AJAX_TIMEOUT
-            disableUploadProgress: true # https://github.com/nathanboktae/q-xhr/issues/12
-          .then (response)->
-            response.data
-
-      # try Zepto with Promises (will not catch exceptions in .then/.done)
-      else if $?.ajax && $?.Deferred
-        console.log 'default ajax impl: setting to zepto with promises'
-        @setAjaxImpl (url, data)->
-          $.ajax
-            url: url
-            type: 'POST'
-            dataType: 'text'
-            timeout: Config.RELAY_AJAX_TIMEOUT
-            context: @
-            error: console.log
-            contentType: 'text/plain'
-            data: data
-
-      else
-        throw new Error 'ajax implementation not set; use q-xhr or $http'
-
-    # invoke ajax
+    @setDefaultAjaxImpl() if not @ajaxImpl
     @ajaxImpl url, data
+
+  @setDefaultAjaxImpl: ->
+    # try to auto-set some default implementations here, if present
+    # Axios + Promise; https://github.com/mzabriskie/axios
+    if axios?
+      @setAjaxImpl (url, data)->
+        axios.request
+          url: url
+          method: 'post'
+          headers:
+            'Accept': 'text/plain'
+            'Content-Type': 'text/plain'
+          data: data
+          responseType: 'text'
+          timeout: Config.RELAY_AJAX_TIMEOUT
+        .then (response)->
+          response.data
+    # Q.xhr + Q; https://github.com/nathanboktae/q-xhr
+    else if Q?.xhr
+      @setAjaxImpl (url, data)->
+        Q.xhr
+          method: 'POST'
+          url: url
+          headers:
+            'Accept': 'text/plain'
+            'Content-Type': 'text/plain'
+          data: data
+          responseType: 'text'
+          timeout: Config.RELAY_AJAX_TIMEOUT
+          disableUploadProgress: true # https://github.com/nathanboktae/q-xhr/issues/12
+        .then (response)->
+          response.data
+    # Zepto; https://github.com/madrobby/zepto
+    # Note: broken Promises - will not catch exceptions in .then/.done
+    else if $?.ajax && $?.Deferred
+      @setAjaxImpl (url, data)->
+        $.ajax
+          url: url
+          type: 'POST'
+          dataType: 'text'
+          timeout: Config.RELAY_AJAX_TIMEOUT
+          context: @
+          error: console.log
+          contentType: 'text/plain'
+          data: data
+    else
+      throw new Error('Unable to set default Ajax implementation.')
+
+  # --- Promises ---
+
+  @promiseImpl: null
+
+  # see: Main.setPromiseImpl()
+  @setPromiseImpl: (promiseImpl)->
+    @promiseImpl = promiseImpl
+
+  @getPromiseImpl: ->
+    @setDefaultPromiseImpl() if not @promiseImpl
+    @promiseImpl
+
+  @setDefaultPromiseImpl: ->
+    if Promise?
+      @setPromiseImpl
+        resolve: (val)->
+          Promise.resolve(val)
+        all: (arr)->
+          Promise.all(arr)
+    else if Q?
+      @setPromiseImpl
+        resolve: (val)->
+          Q.fcall(val)
+        all: (arr)->
+          Q.all(arr)
+    else
+      throw new Error('Unable to set default Promise implementation.')
+
+  # --- Utilities ---
 
   # calls func after the specified delay in milliseconds
   @delay: (milliseconds, func) ->
@@ -129,6 +172,30 @@ class Utils
     .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
     .split('\n')
     console.log "#{i}: #{sl}" for sl, i in s
+
+  # Create a resolved Promise
+  @resolve: (value)->
+    @getPromiseImpl().resolve(value)
+
+  # Wait for all promises
+  # TODO: may have to do this a forgiving .serial() if there are races
+  @all: (promises)->
+    @getPromiseImpl().all(promises)
+
+  # Keep executing promiseFunc on each element of the array,
+  # until it returns a truish value.
+  @serial: (arr, promiseFunc)->
+    i = 0
+    iter = (elem)=>
+      promiseFunc(elem).then (res)->
+        return res if res
+        iter(arr[++i]) if i < arr.length
+    iter(arr[++i])
+
+  # Ensure every argument is truish
+  @ensure: ()->
+    for a in arguments
+      throw new Error('invalid arguments') unless a
 
 module.exports = Utils
 window.Utils = Utils if window.__CRYPTO_DEBUG

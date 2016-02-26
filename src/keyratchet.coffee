@@ -5,6 +5,10 @@ Nacl = require 'nacl'
 
 class KeyRatchet
 
+  # Construction:
+  # KeyRatchet.new(..params..).then (kr)=>
+  #   kr is ready to be used here
+
   # Last used key, we know other party has it
   lastKey: null
 
@@ -17,67 +21,99 @@ class KeyRatchet
 
   _roles: ['lastKey', 'confirmedKey', 'nextKey']
 
-  constructor: (@id, @keyRing, firstKey = null) ->
-    throw new Error('KeyRatchet - missing params') unless @id and @keyRing
-    for s in @_roles
-      @[s] = @keyRing.getKey(@keyTag s)
-    @startRatchet firstKey if firstKey
+  # Returns a Promise
+  @new: (@id, @keyRing, firstKey = null)->
+    Utils.ensure(@id, @keyRing)
+    kr = new KeyRatchet
+    keys = @_roles.map (s)=>
+      kr.keyRing.getKey(kr.keyTag(s)).then (key)=>
+        kr[s] = key
+    Utils.all(keys).then =>
+      if firstKey
+        kr.startRatchet(firstKey).then =>
+          kr
+      else
+        kr
 
-  keyTag: (role) ->
+  # Synchronous
+  keyTag: (role)->
     "#{role}_#{@id}"
 
-  storeKey: (role) ->
-    @keyRing.saveKey @keyTag(role), @[role]
+  # Returns a Promise
+  storeKey: (role)->
+    @keyRing.saveKey(@keyTag(role), @[role])
 
-  startRatchet: (firstKey) ->
+  # Returns a Promise
+  startRatchet: (firstKey)->
     # If we dont have confirmed key to work with
-    # we have to start ratched with a default key
-    for k in ['confirmedKey', 'lastKey']
+    # we have to start ratchet with a default key
+    keys = ['confirmedKey', 'lastKey'].map (k)=>
       unless @[k]
         @[k] = firstKey
         @storeKey k
+    Utils.all(keys).then =>
+      unless @nextKey
+        Nacl.makeKeyPair().then (nextKey)=>
+          @nextKey = nextKey
+          @storeKey('nextKey')
 
-    # create next ratchet key unless we already done so
-    unless @nextKey
-      @nextKey = Nacl.makeKeyPair()
-      @storeKey 'nextKey'
-
-  pushKey: (newKey) ->
+  # Returns a Promise
+  pushKey: (newKey)->
     @lastKey = @confirmedKey
     @confirmedKey = @nextKey
     @nextKey = newKey
-    @storeKey(s) for s in @_roles
+    Utils.all(@_roles.map (s)=> @storeKey(s))
 
-  confKey: (newConfirmedKey) ->
-    return false if @confirmedKey? and @confirmedKey.equal newConfirmedKey
+  # Returns a Promise
+  confKey: (newConfirmedKey)->
+    return Utils.resolve(false) if @confirmedKey and @confirmedKey.equal(newConfirmedKey)
     # console.log "Key confirmed: replacing in #{@id} | #{@confirmedKey.boxPk.toBase64()} with #{newConfirmedKey.boxPk.toBase64()}"
     @lastKey = @confirmedKey
     @confirmedKey = newConfirmedKey
-    @storeKey(s) for s in ['lastKey', 'confirmedKey']
-    return true
+    Utils.all(['lastKey', 'confirmedKey'].map((s)=> @storeKey(s))).then ->
+      true
 
+  # Synchronous
   curKey: ->
     return @confirmedKey if @confirmedKey
-    return @lastKey
+    @lastKey
 
-  h2LastKey: -> Nacl.h2 @lastKey.boxPk
-  h2ConfirmedKey: -> Nacl.h2 @confirmedKey.boxPk
-  h2NextKey: -> Nacl.h2 @nextKey.boxPk
+  # Returns a Promise
+  h2LastKey: ->
+    Nacl.h2(@lastKey.boxPk)
 
-  keyByHash: (hash) ->
-    for s in @_roles
-      return @[s] if Nacl.h2(@[s].boxPk) is hash
+  # Returns a Promise
+  h2ConfirmedKey: ->
+    Nacl.h2(@confirmedKey.boxPk)
 
-  isNextKeyHash: (hash) ->
-    @h2NextKey().equal hash
+  # Returns a Promise
+  h2NextKey: ->
+    Nacl.h2(@nextKey.boxPk)
 
-  toStr: -> JSON.stringify(@).toBase64()
-  fromStr: (str) -> Utils.extend @, JSON.parse(str.fromBase64())
+  # Returns a Promise
+  keyByHash: (hash)->
+    Utils.serial @_roles, (role)=>
+      Nacl.h2(@[s].boxPk).then (h2)=>
+        @[s] if h2 == hash
 
-  selfDestruct: (overseerAuthorized) ->
-    return null unless overseerAuthorized
-    for s in @_roles
-      @keyRing.deleteKey @keyTag s
+  # Returns a Promise
+  isNextKeyHash: (hash)->
+    @h2NextKey().then (h2)->
+      h2.equal(hash)
+
+  # Synchronous
+  toStr: ->
+    JSON.stringify(@).toBase64()
+
+  # Synchronous
+  fromStr: (str)->
+    Utils.extend @, JSON.parse(str.fromBase64())
+
+  # Returns a Promise
+  selfDestruct: (overseerAuthorized)->
+    Utils.ensure(overseerAuthorized)
+    Utils.all @_roles.map (s)=>
+      @keyRing.deleteKey(@keyTag(s))
 
 module.exports = KeyRatchet
 window.KeyRatchet = KeyRatchet if window.__CRYPTO_DEBUG

@@ -1,86 +1,90 @@
 # Copyright (c) 2015 Vault12, Inc.
 # MIT License https://opensource.org/licenses/MIT
 
-# A light wrapper around the js-nacl library
-
-# If we are running in the browser, then nacl_factory will be defined by
-# including the nacl_factory.js lib before including glow. If we are on node,
-# then require 'js-nacl' will include nacl_factory appropriately
-if nacl_factory?
-  js_nacl = nacl_factory
-else
-  js_nacl  = require 'js-nacl' # https://github.com/tonyg/js-nacl
-
 Keys          = require 'keys'
 Utils         = require 'utils'
+Config        = require 'config'
+JsNaclDriver  = require 'js_nacl_driver'
+
 
 class Nacl
-  @HEAP_SIZE:     2 ** 23
-  @_instance:     null
-  @_unloadTimer:  null
 
-  # whenever we call use, we're accessing the js-nacl lib for a function call
-  # if we haven't used any js-nacl lib function calls in 15 seconds, then it
-  # unloads via the unload call
+  @naclImpl: null
+
+  # Synchronous
+  @setNaclImpl: (naclImpl)->
+    @naclImpl = naclImpl
+
+  # Synchronous
   @use: ->
-    # timer unloads 8mb heap 15 sec after last use
-    clearTimeout @_unloadTimer if @_unloadTimer
-    @_unloadTimer = setTimeout((-> Nacl.unload()), 15 * 1000)
+    @setDefaultNaclImpl() if not @naclImpl
+    @naclImpl
 
-    unless window.__naclInstance   # Global instance to avoid duplicating heap
-      window.__naclInstance = js_nacl.instantiate(@HEAP_SIZE) # 8mb heap
-    window.__naclInstance
+  # Synchronous
+  @setDefaultNaclImpl: ->
+    @naclImpl = new JsNaclDriver()
 
-  @unload: ->
-    # Nacl hasn't been used in 15 seconds, unload it and free the heap
-    @_unloadTimer = null
-    window.__naclInstance = null
-    delete window.__naclInstance
-
+  # Returns a Promise
   @makeSecretKey: ->
-    new Keys(
-      key: @use().random_bytes(@use().crypto_secretbox_KEYBYTES)
-    )
+    @use().random_bytes(@use().crypto_secretbox_KEYBYTES).then (bytes)->
+      new Keys
+        key: bytes
 
-  @random: (size = 32) ->
+  # Returns a Promise
+  @random: (size = 32)->
     @use().random_bytes(size)
 
+  # Returns a Promise
   @makeKeyPair: ->
-    new Keys @use().crypto_box_keypair()
+    @use().crypto_box_keypair().then (kp)->
+      new Keys(kp)
 
-  @fromSecretKey: (raw_sk) ->
-    new Keys @use().crypto_box_keypair_from_raw_sk(raw_sk)
+  # Returns a Promise
+  @fromSecretKey: (raw_sk)->
+    @use().crypto_box_keypair_from_raw_sk(raw_sk).then (kp)->
+      new Keys(kp)
 
-  @fromSeed: (seed) ->
-    new Keys @use().crypto_box_keypair_from_seed(seed)
+  # Returns a Promise
+  @fromSeed: (seed)->
+    @use().crypto_box_keypair_from_seed(seed).then (kp)->
+      new Keys(kp)
 
-  @sha256: (data) ->
-    @use().crypto_hash_sha256 data
+  # Returns a Promise
+  @sha256: (data)->
+    @use().crypto_hash_sha256(data)
 
-  @to_hex: (data) ->
-    @use().to_hex data
+  # Returns a Promise
+  @to_hex: (data)->
+    @use().to_hex(data)
 
-  @from_hex: (data) ->
-    @use().from_hex data
+  # Returns a Promise
+  @from_hex: (data)->
+    @use().from_hex(data)
 
-  @encode_utf8: (data) ->
-    @use().encode_utf8 data
+  # Returns a Promise
+  @encode_utf8: (data)->
+    @use().encode_utf8(data)
 
-  @decode_utf8: (data) ->
-    @use().decode_utf8 data
+  # Returns a Promise
+  @decode_utf8: (data)->
+    @use().decode_utf8(data)
 
   # h2(m) = sha256(sha256(32x0 + m))
   # Zero out initial sha256 block, and double hash 0-padded message
   # http://cs.nyu.edu/~dodis/ps/h-of-h.pdf
-  @h2: (str) ->
+  # Returns a Promise
+  @h2: (str)->
     str = str.toUint8ArrayRaw() if Utils.type(str) is 'String'
     tmp = new Uint8Array(32 + str.length)
     tmp.fillWith 0
     tmp.set(str, 32)
-    @sha256 @sha256 tmp
+    @sha256(tmp).then (sha)=>
+      @sha256(sha)
 
-  @h2_64: (b64str) ->
-    Nacl.h2(b64str.fromBase64()).toBase64()
+  # Returns a Promise
+  @h2_64: (b64str)->
+    Nacl.h2(b64str.fromBase64()).then (h2)->
+      h2.toBase64()
 
 module.exports = Nacl
 window.Nacl = Nacl if window.__CRYPTO_DEBUG
