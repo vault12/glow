@@ -12,72 +12,74 @@ describe 'Relay Ops, low level API', ->
   return unless window.__globalTest.runTests['relay low level']
   @timeout(window.__globalTest.timeouts.tiny)
 
-  [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
-
-  Alice.keyRing.addGuest('Bob', Bob.getPubCommKey())
-  Bob.keyRing.addGuest('Alice', Alice.getPubCommKey())
+  [Alice, Bob] = [null, null]
+  it 'create mailboxes', (done)->
+    MailBox.new('Alice').then (ret)->
+      Alice = ret
+      MailBox.new('Bob').then (ret)->
+        Bob = ret
+        Alice.keyRing.addGuest('Bob', Bob.getPubCommKey()).then ->
+          Bob.keyRing.addGuest('Alice', Alice.getPubCommKey()).then ->
+            done()
 
   it 'upload plaintext message to mailbox :hpk', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().done ->
-      r.connectMailbox(Alice).done ->
+    r.openConnection().then ->
+      r.connectMailbox(Alice).then ->
         expect(Alice.sessionKeys).not.empty
-        r.runCmd('upload', Alice,
-          to: Bob.hpk().toBase64()
-          payload: 'Hi Bob from Alice 101')
-        .done ->
-          done()
+        Bob.hpk().then (hpk)->
+          r.runCmd('upload', Alice,
+            to: hpk.toBase64()
+            payload: 'Hi Bob from Alice 101')
+          .then ->
+            done()
 
   it 'message count in Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().done ->
-      r.connectMailbox(Bob).done ->
-        r.runCmd('count', Bob).done ->
-          expect(r.result).equal 1
+    r.openConnection().then ->
+      r.connectMailbox(Bob).then ->
+        r.runCmd('count', Bob).then (count)->
+          expect(count).equal 1
           done()
 
   it 'download plaintext Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().done ->
-      r.connectMailbox(Bob).done ->
-        r.runCmd('download', Bob).done ->
-          expect(r.result[0].data).equal 'Hi Bob from Alice 101'
-          window.__globalTest.bob_nonce = r.result[0].nonce
+    r.openConnection().then ->
+      r.connectMailbox(Bob).then ->
+        r.runCmd('download', Bob).then (result)->
+          expect(result[0].data).equal 'Hi Bob from Alice 101'
+          window.__globalTest.bob_nonce = result[0].nonce
           done()
 
   it 'delete from Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().done ->
-      r.connectMailbox(Bob).done ->
+    r.openConnection().then ->
+      r.connectMailbox(Bob).then ->
         # have not deleted anything
-        r.runCmd('delete', Bob,
-          payload: [])
-        .then ->
-          expect(r.result).equal 1
+        r.runCmd('delete', Bob, payload: []).then (result)->
           # so it is the same count
-        .done ->
+          expect(result).equal 1
           # now delete for real
           r.runCmd('delete', Bob,
-            payload: [__globalTest.bob_nonce])
-          .done ->
-            expect(r.result).equal 0
+            payload: [__globalTest.bob_nonce]).then (result)->
+            expect(result).equal 0
             done()
 
   it 'few bad commands', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().done ->
-      r.connectMailbox(Bob).done ->
+    r.openConnection().then ->
+      r.connectMailbox(Bob).then ->
         expect(-> r.runCmd('count2', Bob)).to.throw(Error)
         expect(-> r.runCmd('UPLOAD', Bob)).to.throw(Error)
         expect(-> r.runCmd('download', Bob)).not.to.throw(Error)
         done()
 
   it 'clear mailboxes', (done) ->
-    Alice.selfDestruct(true)
-    Bob.selfDestruct(true)
-    done()
+    Alice.selfDestruct(true).then ->
+      Bob.selfDestruct(true).then ->
+        done()

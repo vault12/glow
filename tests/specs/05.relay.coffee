@@ -16,7 +16,6 @@ describe 'Relay Session', ->
   @timeout(window.__globalTest.timeouts.long)
 
   [Alice, Bob] = [null, null]
-
   # run this one as blocking async to see if the relay is online for the tests
   it 'get Server Token', (done) ->
 

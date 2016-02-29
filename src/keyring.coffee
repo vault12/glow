@@ -173,11 +173,14 @@ class KeyRing extends EventEmitter
   # Returns a Promise
   selfDestruct: (overseerAuthorized)->
     Utils.ensure(overseerAuthorized)
-    rcopy = @registry.slice()
-    @removeGuest g for g in rcopy
-    @storage.remove('guest_registry').then =>
-      @storage.remove('comm_key').then =>
-        @storage.selfDestruct(overseerAuthorized)
+    next = Utils.resolve()
+    for r in @registry
+      next = next.then =>
+        @removeGuest(r)
+    next.then =>
+      @storage.remove('guest_registry').then =>
+        @storage.remove('comm_key').then =>
+          @storage.selfDestruct(overseerAuthorized)
 
 module.exports = KeyRing
 window.KeyRing = KeyRing if window.__CRYPTO_DEBUG

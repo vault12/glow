@@ -129,7 +129,8 @@ class Relay extends EventEmitter
           "#{message.nonce}\r\n" +
           "#{message.ctext}")
         .then (d)=>
-          return if cmd is 'upload' # no data in the response
+          # no data in the response; return msg obj for tests.nonce
+          return params if cmd is 'upload'
           throw new Error("#{@url} - #{cmd} error") unless d?
           if cmd in ['count', 'download']
             @_processResponse(d, mbx, cmd)

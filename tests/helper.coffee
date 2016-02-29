@@ -59,22 +59,20 @@ else
 
 # control which tests to run
 window.__globalTest.runTests =
-  'utils':            true
-  'nacl':             true
-  'crypto':           true
-  'keyring':          true
-  'mailbox':          true
-  'relay session':    true
-  # 'relay low level':  true
-  # 'relay wrapper':    true
-  # 'relay bulk':       true
-  # 'relay invites':    true
-  # 'relay stress':     true
-  # 'relay ratchet':    true
-  # 'relay noise ratchet': true
-  #
+  'utils':                true
+  'nacl':                 true
+  'crypto':               true
+  'keyring':              true
+  'mailbox':              true
+  'relay session':        true
+  'relay low level':      true
+  'relay wrapper':        true
+  'relay bulk':           true
+  'relay invites':        true
+  # 'relay stress':         true
+  # 'relay ratchet':        true
+  # 'relay noise ratchet':  true
   # 'relay race':       false
-
 
 # In tests you can directly access window.Utils, window.Mailbox, etc.
 # from the console
