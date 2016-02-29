@@ -193,9 +193,10 @@ class Utils
     iter(arr[++i])
 
   # Ensure every argument is truish
+  @ENSURE_ERROR_MSG = 'invalid arguments'
   @ensure: ()->
     for a in arguments
-      throw new Error('invalid arguments') unless a
+      throw new Error(@ENSURE_ERROR_MSG) unless a
 
 module.exports = Utils
 window.Utils = Utils if window.__CRYPTO_DEBUG

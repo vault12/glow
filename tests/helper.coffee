@@ -62,7 +62,7 @@ window.__globalTest.runTests =
   'utils':            true
   'nacl':             true
   'crypto':           true
-  # 'keyring':          true
+  'keyring':          true
   # 'mailbox':          true
   # 'relay session':    true
   # 'relay low level':  true

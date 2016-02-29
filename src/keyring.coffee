@@ -50,12 +50,12 @@ class KeyRing extends EventEmitter
       @registry = registry or []
       @guestKeys = {} # tag -> { pk, hpk }
       @guestKeyTimeouts = {}
-    next = Utils.resolve()
-    for r in @registry
-      next = next.then =>
-        @storage.get("guest[#{r}]").then (val)=>
-          @guestKeys[r] = val
-    next
+      next = Utils.resolve()
+      for r in @registry
+        next = next.then =>
+          @storage.get("guest[#{r}]").then (val)=>
+            @guestKeys[r] = val
+      next
 
   # Returns a Promise
   commFromSeed: (seed)->
@@ -66,8 +66,9 @@ class KeyRing extends EventEmitter
 
   # Returns a Promise
   commFromSecKey: (rawSecKey)->
-    @commKey = Nacl.fromSecretKey rawSecKey
-    @storage.save('comm_key', @commKey.toString())
+    Nacl.fromSecretKey(rawSecKey).then (commKey)=>
+      @commKey = commKey
+      @storage.save('comm_key', @commKey.toString())
 
   # Synchronous
   tagByHpk: (hpk)->
@@ -154,7 +155,8 @@ class KeyRing extends EventEmitter
 
   # Synchronous
   getGuestKey: (strGuestTag)->
-    Utils.ensure(strGuestTag and @guestKeys[strGuestTag])
+    Utils.ensure(strGuestTag)
+    return null unless @guestKeys[strGuestTag]
     new Keys
       boxPk: @getGuestRecord(strGuestTag).fromBase64()
 

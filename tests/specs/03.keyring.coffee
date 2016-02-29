@@ -8,21 +8,27 @@ KeyRing = require 'keyring'
 MailBox = require 'mailbox'
 Nacl    = require 'nacl'
 Config  = require 'config'
+Utils   = require 'utils'
 
 # ----- Keyring with guest keys -----
 describe 'KeyRing with keys', ->
   return unless window.__globalTest.runTests['keyring']
 
-  r1 = new KeyRing('main_test')
-  r2 = new KeyRing('backup_test')
+  r1 = null
+  r2 = null
   k1 = null
 
-  it 'create keyring', ->
-    for r in [r1, r2]
-      expect(r.storage).is.not.null
-      expect(r.commKey).is.not.null
-      expect(r.guestKeys).is.not.null
-      expect(r.registry).is.not.null
+  it 'create keyring', (done)->
+    KeyRing.new('main_test').then (r)->
+      r1 = r
+      KeyRing.new('backup_test').then (r)->
+        r2 = r
+        for r in [r1, r2]
+          expect(r.storage).is.not.null
+          expect(r.commKey).is.not.null
+          expect(r.guestKeys).is.not.null
+          expect(r.registry).is.not.null
+        done()
 
   key_buffer = []
   it 'check system keys', ->
@@ -32,36 +38,44 @@ describe 'KeyRing with keys', ->
         key_buffer.push k
         expect(k.fromBase64().length).equal(32) # 32 byte buffer
 
-  it 'check re-load of system keys', ->
-    rc1 = new KeyRing('main_test')
-    rc2 = new KeyRing('backup_test')
-    kb2 = []
-    for r in [rc1, rc2]
-      for k in [r.getMasterKey(), r.getPubCommKey()]
-        kb2.push k
+  it 'check re-load of system keys', (done)->
+    KeyRing.new('main_test').then (r)->
+      rc1 = r
+      KeyRing.new('backup_test').then (r)->
+        rc2 = r
+        kb2 = []
+        for r in [rc1, rc2]
+          for k in [r.getMasterKey(), r.getPubCommKey()]
+            kb2.push k
+        # rings with the same name load the same keys
+        expect(kb2).deep.equal(key_buffer)
+        done()
 
-    # rings with the same name load the same keys
-    expect(kb2).deep.equal(key_buffer)
+  a = null
+  b = null
+  it 'add guests', (done)->
+    Nacl.makeKeyPair().then (kp)->
+      a = kp
+      Nacl.makeKeyPair().then (kp)->
+        b = kp
+        Promise.all [r1, r2].map (r)->
+          # null calls throw errors
+          expect(-> r.addGuest(null, null)).to.throw(Utils.ENSURE_ERROR_MSG)
+          expect(r.registry.length).equal(0)
+          expect(-> r.addGuest(null, '123')).to.throw(Utils.ENSURE_ERROR_MSG)
+          expect(r.registry.length).equal(0)
+          expect(-> r.addGuest('123', null)).to.throw(Utils.ENSURE_ERROR_MSG)
+          expect(r.registry.length).equal(0)
 
-  a = Nacl.makeKeyPair()
-  b = Nacl.makeKeyPair()
-  it 'add guests', ->
-    for r in [r1, r2]
-      # null calls are ignored
-      expect(r.addGuest(null, null)).is.null
-      expect(r.registry.length).equal(0)
-      expect(r.addGuest(null, '123')).is.null
-      expect(r.registry.length).equal(0)
-      expect(r.addGuest('123', null)).is.null
-      expect(r.registry.length).equal(0)
+          r.addGuest('Alice', a.strPubKey()).then ->
+            expect(r.registry.length).equal(1)
+            expect(r.guestKeys['Alice']).not.null
 
-      r.addGuest('Alice', a.strPubKey())
-      expect(r.registry.length).equal(1)
-      expect(r.guestKeys['Alice']).not.null
-
-      r.addGuest('Bob', b.strPubKey())
-      expect(r.registry.length).equal(2)
-      expect(r.guestKeys['Bob']).not.null
+            r.addGuest('Bob', b.strPubKey()).then ->
+              expect(r.registry.length).equal(2)
+              expect(r.guestKeys['Bob']).not.null
+        .then ->
+          done()
 
   it 'guest keys match', ->
     # retrieved keys equal the ones we provided
@@ -72,42 +86,50 @@ describe 'KeyRing with keys', ->
       for n, i in r.getGuestKey('Bob').boxPk
         expect(b.boxPk[i]).equal(n)
 
-  it 'remove guests', ->
-    for r in [r1, r2]
-      r.removeGuest('Alice')
-      expect(r.registry.length).equal(1)
-      expect(r.guestKeys['Alice']).to.be.undefined
-      expect(r.registry.indexOf('Alice')).equal(-1)
+  it 'remove guests', (done)->
+    Promise.all [r1, r2].map (r)->
+      r.removeGuest('Alice').then ->
+        expect(r.registry.length).equal(1)
+        expect(r.guestKeys['Alice']).to.be.undefined
+        expect(r.registry.indexOf('Alice')).equal(-1)
 
-      r.removeGuest('Bob')
-      expect(r.registry.length).equal(0)
-      expect(r.guestKeys['Bob']).to.be.undefined
-      expect(r.registry.indexOf('Bob')).equal(-1)
+        r.removeGuest('Bob').then ->
+          expect(r.registry.length).equal(0)
+          expect(r.guestKeys['Bob']).to.be.undefined
+          expect(r.registry.indexOf('Bob')).equal(-1)
+    .then ->
+      done()
 
-  [spectre, jb] = [null,null]
-  it 'create from secret key', ->
-    spectre = new KeyRing('missile_command_1')
-    write_on_napkin = spectre.commKey.strSecKey()
+  [spectre, jb] = [null, null]
+  it 'create from secret key', (done)->
+    KeyRing.new('missile_command_1').then (k)->
+      spectre = k
+      write_on_napkin = spectre.commKey.strSecKey()
 
-    # smuggle the napkin
-    jb = new KeyRing('james_bond_briefcase')
-    jb.commFromSecKey write_on_napkin.fromBase64()
-    expect(spectre.commKey).deep.equal jb.commKey
+      # smuggle the napkin
+      KeyRing.new('james_bond_briefcase').then (k)->
+        jb = k
+        jb.commFromSecKey(write_on_napkin.fromBase64()).then ->
+          expect(spectre.commKey).deep.equal jb.commKey
+          done()
 
-  it 'guest persistence', ->
-    id1 = Nacl.random().toBase64()
-    key = Nacl.makeKeyPair().strPubKey()
+  it 'guest persistence', (done)->
+    Nacl.random().then (ret)->
+      id1 = ret.toBase64()
+      Nacl.makeKeyPair().then (ret)->
+        key = ret.strPubKey()
 
-    k1 = new KeyRing(id1)
-    k1.addGuest('guest', key)
-    keyA = k1.getGuestKey('guest')
+        KeyRing.new(id1).then (ret)->
+          k1 = ret
+          k1.addGuest('guest', key).then ->
+            keyA = k1.getGuestKey('guest')
 
-    k2 = new KeyRing(id1)
-    keyB = k2.getGuestKey('guest')
-
-    expect(keyA).is.not.null
-    expect(keyB).is.not.null
-    expect(keyA.toString()).equal(keyB.toString())
+            KeyRing.new(id1).then (k2)->
+              keyB = k2.getGuestKey('guest')
+              expect(keyA).is.not.null
+              expect(keyB).is.not.null
+              expect(keyA.toString()).equal(keyB.toString())
+              done()
 
   it 'emits guest timeout event', (done)->
     st = Config.RELAY_SESSION_TIMEOUT
@@ -118,6 +140,8 @@ describe 'KeyRing with keys', ->
       done()
     k1.addTempGuest('TmpAlice', '123')
 
-  it 'clean up storage', ->
-    for r in [r1, r2, spectre, jb, k1]
+  it 'clean up storage', (done)->
+    Promise.all [r1, r2, spectre, jb, k1].map (r)->
       r.selfDestruct(true)
+    .then ->
+      done()

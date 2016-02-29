@@ -2,10 +2,10 @@
 # MIT License https://opensource.org/licenses/MIT
 window.__CRYPTO_DEBUG = true # Expose #theglow objects as window globals
 
-expect        = require('chai').expect
-
+expect = require('chai').expect
 CryptoStorage = require 'crypto_storage'
-Keys          = require 'keys'
+Keys = require 'keys'
+Utils = require 'utils'
 
 # ----- Cryptographic Storage -----
 describe 'Storage service', ->
@@ -29,12 +29,7 @@ describe 'Storage service', ->
         expect(ret).is.null
         ST._localGet(ST.tag('hello world')).then (ret)->
           expect(ret).equal('wello horld')
-          try
-            ret = null
-            ST._set(null, '123')
-            ret = 'something'
-          catch e
-            expect(ret).is.null
+          expect(-> ST._set(null, '123')).to.throw(Utils.ENSURE_ERROR_MSG)
           ST._set('123', null).then (ret)->
             expect(ret).is.null
             ST._get('hello world').then (ret)->
