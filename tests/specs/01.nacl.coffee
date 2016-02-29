@@ -11,16 +11,17 @@ Nacl = require 'nacl'
 describe 'NACL', ->
   return unless window.__globalTest.runTests['nacl']
 
-  # it 'factory load/unload', (done)->
-  #   Nacl.makeSecretKey().then ->
-  #     expect(window.__naclInstance).not.null
-  #     setTimeout( ->
-  #       s = if window.__naclInstance? then 'OK!' else 'FAIL!'
-  #     , 5 * 1000)
-  #     setTimeout( ->
-  #       s = if window.__naclInstance? then 'FAIL!' else 'OK!'
-  #     , 20 * 1000)
-  #     done()
+  it 'factory load/unload', (done)->
+    jsnacl = Nacl.use()
+    Nacl.makeSecretKey().then ->
+      expect(jsnacl._instance).not.null
+      setTimeout( ->
+        s = if jsnacl._instance then 'OK!' else 'FAIL!'
+      , 5 * 1000)
+      setTimeout( ->
+        s = if jsnacl._instance then 'FAIL!' else 'OK!'
+      , 20 * 1000)
+      done()
 
   it 'Hash₂ of utf8 strings', (done)->
     str = 'hello world | В военное время значение π достигало 4ех'
@@ -100,6 +101,7 @@ describe 'Keys', ->
         expect(k1).not.null
         expect(k2).not.null
         expect(k1).to.have.property 'key'
+        expect(k1.key).not.be.empty
         expect(k2).to.have.property 'boxPk'
         expect(k2).to.have.property 'boxSk'
         done()
@@ -124,7 +126,6 @@ describe 'Keys', ->
   it 'Recover secret key', (done)->
     Nacl.makeKeyPair().then (k)->
       readable_str = k.strSecKey()
-      # console.log readable_str
 
       # recover key
       Nacl.fromSecretKey(readable_str.fromBase64()).then (k2)->

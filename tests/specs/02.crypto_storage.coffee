@@ -11,35 +11,54 @@ Keys          = require 'keys'
 describe 'Storage service', ->
   return unless window.__globalTest.runTests['crypto']
 
-  ST = new CryptoStorage({}) # dummy key
+  ST = null
+
+  it 'constructs', (done)->
+    CryptoStorage.new({}).then (_ST)-> # dummy key
+      ST = _ST
+      done()
 
   it 'tagging', ->
     ST.tag('hello world').should.equal('hello world.v1.stor.vlt12')
     ST.tag('1234567890').should.equal('1234567890.v1.stor.vlt12')
     expect(ST.tag(null)).is.null
 
-  it 'low level write/read', ->
-    ST._set 'hello world', 'wello horld'
-    expect(ST._localGet 'hello world').is.null
-    expect(ST._localGet ST.tag 'hello world').equal('wello horld')
-    expect(ST._set null, '123').is.null
-    expect(ST._set '123', null).is.null
-    ST._set('hello world', 'wello horld').should.equal ST._get('hello world')
-    ST._localRemove ST.tag 'hello world'
-    expect(ST._get 'hello world').is.null
+  it 'low level write/read', (done)->
+    ST._set('hello world', 'wello horld').then ->
+      ST._localGet('hello world').then (ret)->
+        expect(ret).is.null
+        ST._localGet(ST.tag('hello world')).then (ret)->
+          expect(ret).equal('wello horld')
+          try
+            ret = null
+            ST._set(null, '123')
+            ret = 'something'
+          catch e
+            expect(ret).is.null
+          ST._set('123', null).then (ret)->
+            expect(ret).is.null
+            ST._get('hello world').then (ret)->
+              ST._set('hello world', 'wello horld').then (ret2)->
+                ret2.should.equal(ret)
+                ST._localRemove(ST.tag('hello world')).then ->
+                  ST._get('hello world').then (ret)->
+                    expect(ret).is.null
+                    done()
 
-  it 'make new key', ->
-    ST = new CryptoStorage()
-    expect(ST.storageKey).not.null
+  it 'make new key', (done)->
+    CryptoStorage.new().then (_ST)->
+      ST = _ST
+      expect(ST.storageKey).not.null
 
-    ST._localRemove 'storage_key.v1.stor.vlt12'
-    ST2 = new CryptoStorage()
-    expect(ST2.storageKey).not.null
+      ST._localRemove('storage_key.v1.stor.vlt12').then ->
+        CryptoStorage.new().then (ST2)->
+          expect(ST2.storageKey).not.null
 
-    ST.storageKey.key.should.not.equal(ST2.storageKey.key)
+          ST.storageKey.key.should.not.equal(ST2.storageKey.key)
 
-    ST2 = new CryptoStorage(ST.storageKey)
-    ST.storageKey.key.should.equal(ST2.storageKey.key)
+          CryptoStorage.new(ST.storageKey).then (ST2)->
+            ST.storageKey.key.should.equal(ST2.storageKey.key)
+            done()
 
   secret1 = 'hello world'
   secret2 =
@@ -50,37 +69,44 @@ describe 'Storage service', ->
       d: [1, 2, 3, 'big', 'secrets']
       f: 'в военное время значение π достигало 4ех'
 
-  it 'encrypted write/read', ->
-    ST.save('hello',secret1)
-    ST.get('hello').should.equal(secret1)
+  it 'encrypted write/read', (done)->
+    ST.save('hello', secret1).then ->
+      ST.get('hello').then (ret)->
+        ret.should.equal(secret1)
 
-    ST.save('hello2', secret2)
-    s2 = ST.get('hello2')
-    s2.should.deep.equal(secret2)
+        ST.save('hello2', secret2).then ->
+          ST.get('hello2').then (s2)->
+            s2.should.deep.equal(secret2)
 
-    ST.remove 'hello'
-    ST.remove 'hello2'
+            ST.remove('hello').then ->
+              ST.remove('hello2').then ->
 
-    expect(ST._get('hello')).is.null
-    expect(ST._get('hello2')).is.null
+                ST._get('hello').then (ret)->
+                  expect(ret).is.null
+                  ST._get('hello2').then (ret)->
+                    expect(ret).is.null
+                    done()
 
-  it 'restore with key', ->
-    ST = new CryptoStorage()
-    ST.newKey()
-    ST.save('hello', secret2)
-    key = ST.storageKey.toString() # b64 string
+  it 'restore with key', (done)->
+    CryptoStorage.new().then (ST)->
+      ST.newKey().then ->
+        ST.save('hello', secret2).then ->
+          key = ST.storageKey.toString() # b64 string
 
-    ST2 = new CryptoStorage(Keys.fromString(key))
-    s2 = ST2.get('hello')
-    s2.should.deep.equal(secret2)
+          CryptoStorage.new(Keys.fromString(key)).then (ST2)->
+            ST2.get('hello').then (s2)->
+              s2.should.deep.equal(secret2)
 
-    ST.remove 'hello'
-    expect(ST._get('hello')).is.null
+              ST.remove('hello').then ->
+                ST._get('hello').then (ret)->
+                  expect(ret).is.null
+                  done()
 
-  it 'clean storage key', ->
-    ST = new CryptoStorage()
-    expect(ST._localGet 'storage_key.v1.stor.vlt12').
-      not.null
-    ST.selfDestruct(true)
-    expect(ST._localGet 'storage_key.v1.stor.vlt12').
-      is.null
+  it 'clean storage key', (done)->
+    CryptoStorage.new().then (ST)->
+      ST._localGet('storage_key.v1.stor.vlt12').then (ret)->
+        expect(ret).not.null
+        ST.selfDestruct(true).then ->
+          ST._localGet('storage_key.v1.stor.vlt12').then (ret)->
+            expect(ret).is.null
+            done()

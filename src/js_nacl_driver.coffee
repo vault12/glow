@@ -36,6 +36,8 @@ class JsNaclDriver
     # https://github.com/tonyg/js-nacl
     @js_nacl = js_nacl or (if nacl_factory? then nacl_factory) or require('js-nacl')
 
+    @.crypto_secretbox_KEYBYTES = @use().crypto_secretbox_KEYBYTES
+
     JsNaclDriver.API.forEach (f)=>
       @[f] = =>
         inst = @use()

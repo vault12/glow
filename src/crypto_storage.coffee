@@ -25,17 +25,17 @@ class CryptoStorage
     cs = new CryptoStorage
     cs.storageKey = storageKey
     cs.root = if r then ".#{r}#{Config._DEF_ROOT}" else Config._DEF_ROOT
-    next = Utils.resolve()
     # TODO: move storage key to hw and provide it in ctor call
     unless cs.storageKey
-      next = next.then =>
-        cs._loadKey()
-    # If we don't have a loaded storageKey, make a new one
-    unless cs.storageKey
-      next = next.then =>
-        cs.newKey()
-    next.then =>
-      cs
+      cs._loadKey().then ->
+        unless cs.storageKey
+          # If we don't have a loaded storageKey, make a new one
+          cs.newKey().then ->
+            cs
+        else
+          cs
+    else
+      Utils.resolve(cs)
 
   # Returns a Promise
   _saveKey: ->
@@ -66,7 +66,7 @@ class CryptoStorage
 
   # Returns a Promise
   save: (strTag, data)->
-    Utils.ensure(strTag, data)
+    Utils.ensure(strTag)
     # let's convert the data to JSON, then make that string a byte array
     data = JSON.stringify(data)
     Nacl.use().encode_utf8(data).then (data)=>
@@ -104,7 +104,7 @@ class CryptoStorage
 
   # Returns a Promise
   _set: (strTag, strData)->
-    Utils.ensure(strTag, strData)
+    Utils.ensure(strTag)
     @_localSet(@tag(strTag), strData).then ->
       strData
 
