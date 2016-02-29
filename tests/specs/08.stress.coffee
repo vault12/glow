@@ -25,21 +25,27 @@ describe 'Stress Test', ->
 
   mbx = []
   # create test mailboxes
-  for i in [0...max_test]
-    mbx.push new MailBox("mbx_08_#{i}")
-
-  # propagate guest keys
-  # good seeds for sequence generator
-  seed = [233, 253, 167, 107, 161][Nacl.random(1)[0] % 5]
-  seq = (idx) -> ((idx + 1) * 997 * seed) % max_test
-  for i in [0...max_test]
-    for j in [0...3]
-      d = seq(i + j + seed)
-      # add key i => d
-      mbx[i].keyRing.addGuest("guest#{j}", mbx[d].getPubCommKey())
-      # add key d <= i
-      mbx[d].keyRing.addGuest("guest#{3 + j}", mbx[i].getPubCommKey())
-      # console.log "#{j} <=> #{d}"
+  it 'create mailboxes', (done)->
+    Utils.all [0...max_test].map (i)->
+      MailBox.new("mbx_08_#{i}").then (m)->
+        mbx.push(m)
+    .then ->
+      # propagate guest keys
+      # good seeds for sequence generator
+      Nacl.random(1).then (rnd)->
+        seed = [233, 253, 167, 107, 161][rnd[0] % 5]
+        seq = (idx) -> ((idx + 1) * 997 * seed) % max_test
+        tasks = []
+        for i in [0...max_test]
+          for j in [0...3]
+            d = seq(i + j + seed)
+            # add key i => d
+            tasks.push mbx[i].keyRing.addGuest("guest#{j}", mbx[d].getPubCommKey())
+            # add key d <= i
+            tasks.push mbx[d].keyRing.addGuest("guest#{3 + j}", mbx[i].getPubCommKey())
+            # console.log "#{j} <=> #{d}"
+        Utils.all(tasks).then ->
+          done()
 
   # Tests 08-11 are built using a different schema. Instead of declaring a
   # singular test with mocha's 'it' function, we programmatically generate a
@@ -52,32 +58,33 @@ describe 'Stress Test', ->
 
   # send test messages and get a few back
   for k in [0...max_test]
-    it "test #{k}", (done) ->
+    it "test #{k}", (done)->
       return done() if __globalTest.offline
       i = window.__globalTest.idx801++
-      mbx[i].sendToVia('guest0', r, "test msg #{i}=>g0").done ->
-        mbx[i].relaySend('guest1', "test msg #{i}=>g1").done ->
-          mbx[i].relaySend('guest2', "test msg #{i}=>g2").done ->
-            mbx[i].relayMessages().done ->
-              if mbx[i].lastDownload.length > 0
-                expect(mbx[i].lastDownload[0].msg).to.include 'test'
-              if mbx[i].lastDownload.length > 1
-                expect(mbx[i].lastDownload[1].msg).to.include 'test'
+      mbx[i].sendToVia('guest0', r, "test msg #{i}=>g0").then ->
+        mbx[i].relaySend('guest1', "test msg #{i}=>g1", r).then ->
+          mbx[i].relaySend('guest2', "test msg #{i}=>g2", r).then ->
+            mbx[i].relayMessages(r).then (download)->
+              if download.length > 0
+                expect(download[0].msg).to.include 'test'
+              if download.length > 1
+                expect(download[1].msg).to.include 'test'
               done()
 
   # get the last messages back
   window.__globalTest.idx802 = 0
   for k in [0...max_test]
-    it "download #{k}", (done) ->
+    it "download #{k}", (done)->
       return done() if __globalTest.offline
       i = window.__globalTest.idx802++
-      mbx[i].getRelayMessages(r).done ->
-        l = mbx[i].relayNonceList()
-        mbx[i].relayDelete(l).done ->
+      mbx[i].getRelayMessages(r).then (download)->
+        l = mbx[i].relayNonceList(download)
+        mbx[i].relayDelete(l, r).then ->
           done()
 
-  it 'cleanup', (done) ->
-    Utils.delay timeout + 1000, ->
-      for i in [0...max_test]
-        mbx[i].selfDestruct(true)
-    done()
+  it 'cleanup', (done)->
+    tasks = []
+    for i in [0...max_test]
+      tasks.push mbx[i].selfDestruct(true)
+    Utils.all(tasks).then ->
+      done()

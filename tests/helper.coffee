@@ -36,7 +36,7 @@ if localStorage
 # instructions at https://github.com/vault12/zax#installation
 
 # select a preset (local vs remote) or edit your own settings
-localTest = true
+localTest = false
 
 if localTest
   # local testing
@@ -69,10 +69,10 @@ window.__globalTest.runTests =
   'relay wrapper':        true
   'relay bulk':           true
   'relay invites':        true
-  # 'relay stress':         true
-  # 'relay ratchet':        true
-  # 'relay noise ratchet':  true
-  # 'relay race':       false
+  'relay stress':         true
+  'relay ratchet':        true
+  'relay noise ratchet':  true
+  'relay race':           true # todo: false
 
 # In tests you can directly access window.Utils, window.Mailbox, etc.
 # from the console

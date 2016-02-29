@@ -151,7 +151,8 @@ class KeyRing extends EventEmitter
 
   # Returns a Promise
   removeGuest: (strGuestTag)->
-    Utils.ensure(strGuestTag and @guestKeys[strGuestTag])
+    Utils.ensure(strGuestTag)
+    return Utils.resolve() unless @guestKeys[strGuestTag]
     @guestKeys[strGuestTag] = null # erase the pointer just in case
     delete @guestKeys[strGuestTag]
     @_removeGuestRecord strGuestTag

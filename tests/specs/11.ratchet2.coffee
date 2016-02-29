@@ -29,49 +29,56 @@ describe 'Ratchet With Noise', ->
 
   mbx = []
   # create test mailboxes
-  for i in [0...max_test]
-    mbx.push new RatchetBox("mbx_11_#{i}")
-
-  # good seeds for sequence generator
-  # seed = [233, 253, 167, 107, 161][Nacl.random(1)[0] % 5]
-  seed = 233
-  seq = (idx) -> ((idx + 1) * 997 * seed) % max_test
-  # propagate guest keys
-  k = 0
-  for i in [0...max_test]
-    for j in [0...max_guest]
-      k++ while (d = seq(i + j + seed + k)) is i
-      mbx[i].keyRing.addGuest("guest#{j}", mbx[d].getPubCommKey())
-      mbx[d].keyRing.addGuest("guest#{max_guest + j}", mbx[i].getPubCommKey())
+  it 'create ratchets', (done)->
+    Utils.all [0...max_test].map (i)->
+      RatchetBox.new("mbx_11_#{i}").then (m)->
+        mbx.push(m)
+    .then ->
+      # good seeds for sequence generator
+      Nacl.random(1).then (rnd)->
+        seed = [233, 253, 167, 107, 161][rnd[0] % 5]
+        # seed = 233
+        seq = (idx) -> ((idx + 1) * 997 * seed) % max_test
+        # propagate guest keys
+        tasks = []
+        k = 0
+        for i in [0...max_test]
+          for j in [0...max_guest]
+            k++ while (d = seq(i + j + seed + k)) is i
+            tasks.push mbx[i].keyRing.addGuest("guest#{j}", mbx[d].getPubCommKey())
+            tasks.push mbx[d].keyRing.addGuest("guest#{max_guest + j}", mbx[i].getPubCommKey())
+        Utils.all(tasks).then ->
+          done()
 
   # send test messages and get a few back
   window.__globalTest.idx111 = 0
   for v in [0...max_guest]
     for k in [0...max_test]
-      it "test #{k}", (done) ->
+      it "test #{k}", (done)->
         return done() if __globalTest.offline
         i = window.__globalTest.idx111++ % max_test
-        j = Nacl.random(1)[0] % max_guest
-        hpk_from  = mbx[i].hpk().toBase64()
-        hpk_to    = mbx[i]._gHpk("guest#{j}").toBase64()
-        mbx[i].sendToVia("guest#{j}", r, "ratchet #{hpk_from} mbx#{i}=>guest#{j} #{hpk_to}").done ->
-          mbx[i].relayMessages().done ->
-            if mbx[i].lastDownload.length > 0
-              for m in mbx[i].lastDownload
-                # console.log m
-                expect(m.msg).to.contain "ratchet" if m.msg?
-            done()
+        Nacl.random(1).then (rnd)->
+          j = rnd[0] % max_guest
+          mbx[i].hpk().then (hpk)->
+            hpk_from = hpk.toBase64()
+            mbx[i]._gHpk("guest#{j}").then (gHpk)->
+              hpk_to = gHpk.toBase64()
+              mbx[i].sendToVia("guest#{j}", r, "ratchet #{hpk_from} mbx#{i}=>guest#{j} #{hpk_to}").then ->
+                mbx[i].relayMessages(r).then (download)->
+                  if download.length > 0
+                    for m in download
+                      expect(m.msg).to.contain "ratchet" if m.msg?
+                  done()
 
   # get last messages back
   window.__globalTest.idx112 = 0
   for k in [0...max_test]
-    it "download #{k}", (done) ->
+    it "download #{k}", (done)->
       return done() if __globalTest.offline
       i = window.__globalTest.idx112++
-      mbx[i].getRelayMessages(r).done ->
-        l = mbx[i].relayNonceList()
-        # console.log l.length
-        mbx[i].relayDelete(l).done ->
+      mbx[i].getRelayMessages(r).then (download)->
+        l = mbx[i].relayNonceList(download)
+        mbx[i].relayDelete(l, r).then ->
           done()
 
   # delete mailboxes after delay to
@@ -81,7 +88,6 @@ describe 'Ratchet With Noise', ->
   for k in [0...max_test]
     j = window.__globalTest.idx113++
     it "cleanup #{j}", (done)->
-      Utils.delay 100, ->
-        i = window.__globalTest.idx114++
-        mbx[i].selfDestruct(true,true)
+      i = window.__globalTest.idx114++
+      mbx[i].selfDestruct(true, true).then ->
         done()

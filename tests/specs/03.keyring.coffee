@@ -58,7 +58,7 @@ describe 'KeyRing with keys', ->
       a = kp
       Nacl.makeKeyPair().then (kp)->
         b = kp
-        Promise.all [r1, r2].map (r)->
+        Utils.all [r1, r2].map (r)->
           # null calls throw errors
           expect(-> r.addGuest(null, null)).to.throw(Utils.ENSURE_ERROR_MSG)
           expect(r.registry.length).equal(0)
@@ -87,7 +87,7 @@ describe 'KeyRing with keys', ->
         expect(b.boxPk[i]).equal(n)
 
   it 'remove guests', (done)->
-    Promise.all [r1, r2].map (r)->
+    Utils.all [r1, r2].map (r)->
       r.removeGuest('Alice').then ->
         expect(r.registry.length).equal(1)
         expect(r.guestKeys['Alice']).to.be.undefined
@@ -141,7 +141,7 @@ describe 'KeyRing with keys', ->
     k1.addTempGuest('TmpAlice', '123')
 
   it 'clean up storage', (done)->
-    Promise.all [r1, r2, spectre, jb, k1].map (r)->
+    Utils.all [r1, r2, spectre, jb, k1].map (r)->
       r.selfDestruct(true)
     .then ->
       done()
