@@ -9,7 +9,7 @@ JsNaclDriver  = require 'js_nacl_driver'
 
 class Nacl
 
-  @naclImpl: null
+  naclImpl: null
 
   # Synchronous
   @setNaclImpl: (naclImpl)->

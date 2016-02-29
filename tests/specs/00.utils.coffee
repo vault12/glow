@@ -77,4 +77,3 @@ describe 'Base64 functions', ->
     a2.should.deep.equal([97, 98, 99])
     a3 = new Uint8Array(a2)
     a3.should.deep.equal(a)
-
