@@ -271,7 +271,7 @@ class MailBox extends EventEmitter
   # Converts any object into Uint8Array
   # Returns a Promise
   _parseData: (data)->
-    Utils.ensure(Utils.type(data) is 'Uint8Array')
+    return Utils.resolve(data) if Utils.type(data) is 'Uint8Array'
     Nacl.use().encode_utf8(JSON.stringify(data))
 
   # Makes a timestamp nonce that a relay expects for any crypto operations.

@@ -15,64 +15,66 @@ describe 'Relay Session', ->
   return unless window.__globalTest.runTests['relay session']
   @timeout(window.__globalTest.timeouts.long)
 
-  [Alice, Bob] = [new MailBox('Alice'), new MailBox('Bob')]
+  [Alice, Bob] = [null, null]
 
   # run this one as blocking async to see if the relay is online for the tests
   it 'get Server Token', (done) ->
-    r = new Relay(__globalTest.host)
 
-    # cater for various Promise implementations (.finally/.always)
-    always = ->
-      unless r.relayToken
-        window.__globalTest.offline = true
-        console.log "Local server offline: start relay at #{r.url}"
-      done()
+    MailBox.new('Alice').then (ret)->
+      Alice = ret
+      MailBox.new('Bob').then (ret)->
+        Bob = ret
 
-    r.getServerToken().then ->
-      r.online.should.be.false
-      r.relayToken.should.not.be.null
-      r.clientToken.should.not.be.null
-      expect(r.relayKey).is.null
+        r = new Relay(__globalTest.host)
+        tm = Config.RELAY_TOKEN_TIMEOUT
+        Config.RELAY_TOKEN_TIMEOUT = 1
 
-      Utils.delay Config.RELAY_TOKEN_TIMEOUT + 1000, ->
-        r.online.should.be.false
-        expect(r.relayToken).is.null
-        expect(r.clientToken).is.null
-    .finally always
+        r.getServerToken().then ->
+
+          unless r.relayToken
+            window.__globalTest.offline = true
+            console.log "Local server offline: start relay at #{r.url}"
+
+          r.online.should.be.false
+          r.relayToken.should.not.be.null
+          r.clientToken.should.not.be.null
+          expect(r.relayKey).is.null
+
+          Utils.delay Config.RELAY_TOKEN_TIMEOUT + 5, ->
+            Config.RELAY_TOKEN_TIMEOUT = tm
+            r.online.should.be.false
+            expect(r.relayToken).is.null
+            expect(r.clientToken).is.null
+            done()
 
   it 'get session key', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    o = r.openConnection().done ->
+    r.openConnection().then ->
       r.online.should.be.true
       r.relayToken.should.not.be.null
       r.clientToken.should.not.be.null
       r.relayKey.should.not.be.null
-      Utils.delay Config.RELAY_SESSION_TIMEOUT + 1000, ->
-        r.online.should.be.false
-        expect(r.relayToken).is.null
-        expect(r.clientToken).is.null
-        expect(r.relayKey).is.null
       done()
 
   it 'prove mailbox :hpk', (done)->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().done ->
-      r.connectMailbox(Alice).done ->
+    r.openConnection().then ->
+      r.connectMailbox(Alice).then ->
         expect(Alice.sessionKeys).not.empty
         done()
 
-  it 'emits session expired event', (done)->
+  it 'emits token timeout event', (done)->
     rt = Config.RELAY_TOKEN_TIMEOUT
     Config.RELAY_TOKEN_TIMEOUT = 1
     r = new Relay(__globalTest.host)
     r.on 'relaytokentimeout', ->
       Config.RELAY_TOKEN_TIMEOUT = rt
       done()
-    r.openConnection().done ->
+    r.openConnection()
 
   it 'clear mailboxes', (done) ->
-    Alice.selfDestruct(true)
-    Bob.selfDestruct(true)
-    done()
+    Alice.selfDestruct(true).then ->
+      Bob.selfDestruct(true).then ->
+        done()

@@ -61,7 +61,7 @@ class Relay extends EventEmitter
       handshake = @clientToken.concat(@relayToken)
       if @diff is 0
         next = Nacl.h2(handshake).then (h2)=>
-          sessionHandshake = h.toBase64()
+          h2.toBase64()
       else
         ensureNonceDiff = =>
           Nacl.random(32).then (nonce)=>
@@ -69,9 +69,9 @@ class Relay extends EventEmitter
               return nonce if Utils.arrayZeroBits(h2, @diff)
               ensureNonceDiff()
         next = ensureNonceDiff().then (nonce)=>
-          sessionHandshake = nonce.toBase64()
+          nonce.toBase64()
       # make ajax request
-      next.then =>
+      next.then (sessionHandshake)=>
         # We confirm handshake by sending back h2(clientToken, relay_token)
         @_ajax('verify_session', "#{@h2ClientToken}\r\n#{sessionHandshake}\r\n").then (d)=>
           # relay gives us back temp session key

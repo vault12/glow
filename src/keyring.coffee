@@ -135,16 +135,19 @@ class KeyRing extends EventEmitter
         hpk: h2.toBase64()
 
   # Synchronous
-  addTempGuest: (strGuestTag,strPubKey)->
-    Utils.ensure(strGuestTag and strPubKey)
+  addTempGuest: (strGuestTag, strPubKey)->
+    Utils.ensure(strGuestTag, strPubKey)
     strPubKey = strPubKey.trimLines()
-    @guestKeys[strGuestTag] = strPubKey
-    if @guestKeyTimeouts[strGuestTag]
-      clearTimeout @guestKeyTimeouts[strGuestTag]
-    @guestKeyTimeouts[strGuestTag] = Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
-      delete @guestKeys[strGuestTag]
-      delete @guestKeyTimeouts[strGuestTag]
-      @emit 'tmpguesttimeout', strGuestTag
+    Nacl.h2(strPubKey.fromBase64()).then (h2)=>
+      @guestKeys[strGuestTag] =
+        pk: strPubKey
+        hpk: h2.toBase64()
+      if @guestKeyTimeouts[strGuestTag]
+        clearTimeout @guestKeyTimeouts[strGuestTag]
+      @guestKeyTimeouts[strGuestTag] = Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
+        delete @guestKeys[strGuestTag]
+        delete @guestKeyTimeouts[strGuestTag]
+        @emit 'tmpguesttimeout', strGuestTag
 
   # Returns a Promise
   removeGuest: (strGuestTag)->
@@ -162,7 +165,8 @@ class KeyRing extends EventEmitter
 
   # Synchronous
   getGuestRecord: (strGuestTag)->
-    Utils.ensure(strGuestTag and @guestKeys[strGuestTag])
+    Utils.ensure(strGuestTag)
+    return null unless @guestKeys[strGuestTag]
     @guestKeys[strGuestTag].pk
 
   # have to call with overseerAuthorized as true for extra safety

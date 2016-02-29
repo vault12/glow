@@ -19,45 +19,55 @@ describe 'MailBox, offline Relay', ->
   [msg1, msg2, msg3, msg4, msg5,
    msg6, msg7, pt1, pt2, pt3, pt4] = (null for n in [1..11])
 
-  it 'create mailbox', ->
-    Alice = new MailBox('Alice_mbx')
-    Bob = new MailBox('Bob_mbx')
-    expect(Alice.keyRing).not.null
-    expect(Bob.keyRing).not.null
+  it 'create mailbox', (done)->
+    MailBox.new('Alice_mbx').then (ret)->
+      Alice = ret
+      MailBox.new('Bob_mbx').then (ret)->
+        Bob = ret
+        expect(Alice.keyRing).not.null
+        expect(Bob.keyRing).not.null
+        done()
 
-  it 'exchange keys', ->
+  it 'exchange keys', (done)->
     expect(Alice.keyRing.registry.length).equal(0)
     expect(Alice.keyRing.getGuestKey('Bob_mbx')).is.null
-    Alice.keyRing.addGuest('Bob_mbx', Bob.getPubCommKey())
-    expect(Alice.keyRing.registry.length).equal(1)
-    expect(Alice.keyRing.getGuestKey('Bob_mbx')).is.not.null
+    Alice.keyRing.addGuest('Bob_mbx', Bob.getPubCommKey()).then ->
+      expect(Alice.keyRing.registry.length).equal(1)
+      expect(Alice.keyRing.getGuestKey('Bob_mbx')).is.not.null
 
-    expect(Bob.keyRing.registry.length).equal(0)
-    expect(Bob.keyRing.getGuestKey('Alice_mbx')).is.null
-    Bob.keyRing.addGuest('Alice_mbx', Alice.getPubCommKey())
-    expect(Bob.keyRing.registry.length).equal(1)
-    expect(Bob.keyRing.getGuestKey('Alice_mbx')).is.not.null
+      expect(Bob.keyRing.registry.length).equal(0)
+      expect(Bob.keyRing.getGuestKey('Alice_mbx')).is.null
+      Bob.keyRing.addGuest('Alice_mbx', Alice.getPubCommKey()).then ->
+        expect(Bob.keyRing.registry.length).equal(1)
+        expect(Bob.keyRing.getGuestKey('Alice_mbx')).is.not.null
+        done()
 
-  it 'Mailbox from well known seed', ->
-    m = MailBox.fromSeed('hello')
-    pk = m.keyRing.getPubCommKey()
-    pk.should.equal '2DM+z1PaxGXVnzsDh4zv+IlH7sV8llEFoEmg9fG3pRA='
-    m.hpk().should.deep.equal new Uint8Array([255, 29, 75, 250, 114, 23, 77,
-      198, 215, 184, 25, 211, 126, 152, 31, 82, 236, 188, 237, 35, 204, 66,
-      209, 107, 162, 211, 241, 170, 1, 60, 236, 221])
-    m.selfDestruct(true)
+  it 'Mailbox from well known seed', (done)->
+    MailBox.fromSeed('hello').then (m)->
+      pk = m.keyRing.getPubCommKey()
+      pk.should.equal '2DM+z1PaxGXVnzsDh4zv+IlH7sV8llEFoEmg9fG3pRA='
+      m.hpk().then (ret)->
+        ret.should.deep.equal new Uint8Array([255, 29, 75, 250, 114, 23, 77,
+          198, 215, 184, 25, 211, 126, 152, 31, 82, 236, 188, 237, 35, 204, 66,
+          209, 107, 162, 211, 241, 170, 1, 60, 236, 221])
+        m.selfDestruct(true).then ->
+          done()
 
-  it 'encrypt message', ->
-    msg1 = Alice.encodeMessage('Bob_mbx', pt1 = 'Bob, I heard from Наталья
-      Дубровская we have a problem with the water chip.')
-    msg2 = Bob.encodeMessage('Alice_mbx', pt2 = 'Alice, I will dispatch one
-      of the youngsters to find a replacement outside. नमस्ते!')
+  it 'encrypt message', (done)->
+    Alice.encodeMessage('Bob_mbx', pt1 = 'Bob, I heard from Наталья
+      Дубровская we have a problem with the water chip.').then (ret)->
+      msg1 = ret
+      Bob.encodeMessage('Alice_mbx', pt2 = 'Alice, I will dispatch one
+        of the youngsters to find a replacement outside. नमस्ते!').then (ret)->
+        msg2 = ret
+        done()
 
-  it 'decrypt message', ->
-    m1 = Bob.decodeMessage('Alice_mbx', msg1.nonce, msg1.ctext)
-    m2 = Alice.decodeMessage('Bob_mbx', msg2.nonce, msg2.ctext)
-    pt1.should.equal(m1)
-    pt2.should.equal(m2)
+  it 'decrypt message', (done)->
+    Bob.decodeMessage('Alice_mbx', msg1.nonce, msg1.ctext).then (m1)->
+      Alice.decodeMessage('Bob_mbx', msg2.nonce, msg2.ctext).then (m2)->
+        pt1.should.equal(m1)
+        pt2.should.equal(m2)
+        done()
 
   it 'emits session timeout event', (done)->
     st = Config.RELAY_SESSION_TIMEOUT
@@ -67,6 +77,7 @@ describe 'MailBox, offline Relay', ->
       done()
     Alice.createSessionKey('session_id_123')
 
-  it 'clear mailboxes', ->
-    Alice.selfDestruct(true)
-    Bob.selfDestruct(true)
+  it 'clear mailboxes', (done)->
+    Alice.selfDestruct(true).then ->
+      Bob.selfDestruct(true).then ->
+        done()
