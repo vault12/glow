@@ -90,6 +90,9 @@ class CryptoStorage
           # restore JSON string from plain text array and parse it
           Nacl.use().decode_utf8(aPText).then (data)=>
             JSON.parse(data)
+        .catch (e)->
+          console.log 'error with .get(' + strTag + ')'
+          throw e
 
   # Returns a Promise
   remove: (strTag)->

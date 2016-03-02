@@ -177,6 +177,9 @@ class Utils
   @resolve: (value)->
     @getPromiseImpl().resolve(value)
 
+  @reject: (error)->
+    @getPromiseImpl().reject(error)
+
   # Wait for all promises
   # TODO: may have to do this a forgiving .serial() if there are races
   @all: (promises)->

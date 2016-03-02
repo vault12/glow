@@ -41,7 +41,10 @@ class JsNaclDriver
     JsNaclDriver.API.forEach (f)=>
       @[f] = =>
         inst = @use()
-        Utils.resolve(inst[f].apply(inst, arguments))
+        try
+          Utils.resolve(inst[f].apply(inst, arguments))
+        catch e
+          Utils.reject(e)
 
   # whenever we call use, we're accessing the js-nacl lib for a function call
   # if we haven't used any js-nacl lib function calls in 15 seconds, then it

@@ -36,6 +36,7 @@ module.exports =
 
   # promiseImpl requried API:
   # - resolve(val): Promise(val) - return a resolved promise
+  # - reject(val): Promise(rejected: error) - return a rejected promise
   # - all([promises]): Promise - resolve all elements
   # The Promise object is expected to implement:
   # - then(func(result)): Promise
