@@ -1,3 +1,7 @@
+### v2.0.0
+
+* Support for async access
+
 ### v1.1.4
 
 * Force new session key
