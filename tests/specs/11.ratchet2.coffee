@@ -30,7 +30,7 @@ describe 'Ratchet With Noise', ->
   mbx = []
   # create test mailboxes
   it 'create ratchets', (done)->
-    Utils.all [0...max_test].map (i)->
+    handle done, Utils.all [0...max_test].map (i)->
       RatchetBox.new("mbx_11_#{i}").then (m)->
         mbx.push(m)
     .then ->
@@ -57,7 +57,7 @@ describe 'Ratchet With Noise', ->
       it "test #{k}", (done)->
         return done() if __globalTest.offline
         i = window.__globalTest.idx111++ % max_test
-        Nacl.random(1).then (rnd)->
+        handle done, Nacl.random(1).then (rnd)->
           j = rnd[0] % max_guest
           mbx[i].hpk().then (hpk)->
             hpk_from = hpk.toBase64()
@@ -76,7 +76,7 @@ describe 'Ratchet With Noise', ->
     it "download #{k}", (done)->
       return done() if __globalTest.offline
       i = window.__globalTest.idx112++
-      mbx[i].getRelayMessages(r).then (download)->
+      handle done, mbx[i].getRelayMessages(r).then (download)->
         l = mbx[i].relayNonceList(download)
         mbx[i].relayDelete(l, r).then ->
           done()
@@ -89,5 +89,5 @@ describe 'Ratchet With Noise', ->
     j = window.__globalTest.idx113++
     it "cleanup #{j}", (done)->
       i = window.__globalTest.idx114++
-      mbx[i].selfDestruct(true, true).then ->
+      handle done, mbx[i].selfDestruct(true, true).then ->
         done()

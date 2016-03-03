@@ -14,7 +14,7 @@ describe 'Storage service', ->
   ST = null
 
   it 'constructs', (done)->
-    CryptoStorage.new({}).then (_ST)-> # dummy key
+    handle done, CryptoStorage.new({}).then (_ST)-> # dummy key
       ST = _ST
       done()
 
@@ -24,7 +24,7 @@ describe 'Storage service', ->
     expect(ST.tag(null)).is.null
 
   it 'low level write/read', (done)->
-    ST._set('hello world', 'wello horld').then ->
+    handle done, ST._set('hello world', 'wello horld').then ->
       ST._localGet('hello world').then (ret)->
         expect(ret).is.null
         ST._localGet(ST.tag('hello world')).then (ret)->
@@ -41,7 +41,7 @@ describe 'Storage service', ->
                     done()
 
   it 'make new key', (done)->
-    CryptoStorage.new().then (_ST)->
+    handle done, CryptoStorage.new().then (_ST)->
       ST = _ST
       expect(ST.storageKey).not.null
 
@@ -65,7 +65,7 @@ describe 'Storage service', ->
       f: 'в военное время значение π достигало 4ех'
 
   it 'encrypted write/read', (done)->
-    ST.save('hello', secret1).then ->
+    handle done, ST.save('hello', secret1).then ->
       ST.get('hello').then (ret)->
         ret.should.equal(secret1)
 
@@ -83,7 +83,7 @@ describe 'Storage service', ->
                     done()
 
   it 'restore with key', (done)->
-    CryptoStorage.new().then (ST)->
+    handle done, CryptoStorage.new().then (ST)->
       ST.newKey().then ->
         ST.save('hello', secret2).then ->
           key = ST.storageKey.toString() # b64 string
@@ -98,7 +98,7 @@ describe 'Storage service', ->
                   done()
 
   it 'clean storage key', (done)->
-    CryptoStorage.new().then (ST)->
+    handle done, CryptoStorage.new().then (ST)->
       ST._localGet('storage_key.v1.stor.vlt12').then (ret)->
         expect(ret).not.null
         ST.selfDestruct(true).then ->

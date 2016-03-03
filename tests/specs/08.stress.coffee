@@ -26,7 +26,7 @@ describe 'Stress Test', ->
   mbx = []
   # create test mailboxes
   it 'create mailboxes', (done)->
-    Utils.all [0...max_test].map (i)->
+    handle done, Utils.all [0...max_test].map (i)->
       MailBox.new("mbx_08_#{i}").then (m)->
         mbx.push(m)
     .then ->
@@ -61,7 +61,7 @@ describe 'Stress Test', ->
     it "test #{k}", (done)->
       return done() if __globalTest.offline
       i = window.__globalTest.idx801++
-      mbx[i].sendToVia('guest0', r, "test msg #{i}=>g0").then ->
+      handle done, mbx[i].sendToVia('guest0', r, "test msg #{i}=>g0").then ->
         mbx[i].relaySend('guest1', "test msg #{i}=>g1", r).then ->
           mbx[i].relaySend('guest2', "test msg #{i}=>g2", r).then ->
             mbx[i].relayMessages(r).then (download)->
@@ -77,7 +77,7 @@ describe 'Stress Test', ->
     it "download #{k}", (done)->
       return done() if __globalTest.offline
       i = window.__globalTest.idx802++
-      mbx[i].getRelayMessages(r).then (download)->
+      handle done, mbx[i].getRelayMessages(r).then (download)->
         l = mbx[i].relayNonceList(download)
         mbx[i].relayDelete(l, r).then ->
           done()
@@ -86,5 +86,5 @@ describe 'Stress Test', ->
     tasks = []
     for i in [0...max_test]
       tasks.push mbx[i].selfDestruct(true)
-    Utils.all(tasks).then ->
+    handle done, Utils.all(tasks).then ->
       done()

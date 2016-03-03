@@ -13,7 +13,7 @@ describe 'NACL', ->
 
   it 'factory load/unload', (done)->
     jsnacl = Nacl.use()
-    Nacl.makeSecretKey().then ->
+    handle done, Nacl.makeSecretKey().then ->
       expect(jsnacl._instance).not.null
       setTimeout( ->
         s = if jsnacl._instance then 'OK!' else 'FAIL!'
@@ -25,7 +25,7 @@ describe 'NACL', ->
 
   it 'Hash₂ of utf8 strings', (done)->
     str = 'hello world | В военное время значение π достигало 4ех'
-    Nacl.h2(str).then (hash1)->
+    handle done, Nacl.h2(str).then (hash1)->
       hash1str = hash1.fromCharCodes()
       expect(hash1).not.null
       expect(hash1).not.equal(str)
@@ -51,7 +51,7 @@ describe 'NACL', ->
     expect(str6).equal "apple pie | яблочный пирогpeach pie | персиковый пирог"
 
   it 'Concat strings', (done)->
-    Nacl.random(32).then (aUint8Array1)->
+    handle done, Nacl.random(32).then (aUint8Array1)->
       Nacl.to_hex(aUint8Array1).then (str7)->
         Nacl.random(32).then (aUint8Array2)->
           Nacl.to_hex(aUint8Array2).then (str8)->
@@ -61,7 +61,7 @@ describe 'NACL', ->
             done()
 
   it 'Concat arrays', (done)->
-    Nacl.random(32).then (a1)->
+    handle done, Nacl.random(32).then (a1)->
       Nacl.random(32).then (a2)->
         a3 = a1.concat a2
         expect(a3.length).equal(64)
@@ -76,7 +76,7 @@ describe 'NACL', ->
           done()
 
   it 'Concat H2 Nacl Strings', (done)->
-    Nacl.h2('123').then (str1)->
+    handle done, Nacl.h2('123').then (str1)->
       Nacl.h2('124').then (str2)->
         expect(str1.length).equal(32)
         expect(str2.length).equal(32)
@@ -94,7 +94,7 @@ describe 'Keys', ->
   k2 = null
 
   it 'create key', (done)->
-    Nacl.makeSecretKey().then (_k1)->
+    handle done, Nacl.makeSecretKey().then (_k1)->
       k1 = _k1
       Nacl.makeKeyPair().then (_k2)->
         k2 = _k2
@@ -116,7 +116,7 @@ describe 'Keys', ->
       expect(b).equal(kc.key[i])
 
   it 'Keypair conversions', (done)->
-    Nacl.use().crypto_box_keypair().then (_kp)->
+    handle done, Nacl.use().crypto_box_keypair().then (_kp)->
       kp = new Keys(_kp)
       kps = Keys.keys2str(kp)
       kp2 = Keys.str2keys(kps)
@@ -124,7 +124,7 @@ describe 'Keys', ->
       done()
 
   it 'Recover secret key', (done)->
-    Nacl.makeKeyPair().then (k)->
+    handle done, Nacl.makeKeyPair().then (k)->
       readable_str = k.strSecKey()
 
       # recover key

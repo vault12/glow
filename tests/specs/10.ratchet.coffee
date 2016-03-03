@@ -22,7 +22,7 @@ describe 'Key Ratchet', ->
   mbx = []
   # create test mailboxes
   it 'create ratchets', (done)->
-    Utils.all [0...max_test].map (i)->
+    handle done, Utils.all [0...max_test].map (i)->
       RatchetBox.new("mbx_10_#{i}").then (m)->
         mbx.push(m)
     .then ->
@@ -50,7 +50,7 @@ describe 'Key Ratchet', ->
     it "test #{k}", (done)->
       return done() if __globalTest.offline
       i = window.__globalTest.idx101++
-      mbx[i].sendToVia('guest0', r, "ratchet #1 #{i}=>g0").then ->
+      handle done, mbx[i].sendToVia('guest0', r, "ratchet #1 #{i}=>g0").then ->
         mbx[i].relaySend('guest0', "ratchet #2 #{i}=>g0", r).then ->
           mbx[i].relaySend('guest0', "ratchet #3 #{i}=>g0", r).then ->
             mbx[i].relayMessages(r).then (download)->
@@ -65,7 +65,7 @@ describe 'Key Ratchet', ->
     it "download #{k}", (done)->
       return done() if __globalTest.offline
       i = window.__globalTest.idx102++
-      mbx[i].getRelayMessages(r).then (download)->
+      handle done, mbx[i].getRelayMessages(r).then (download)->
         l = mbx[i].relayNonceList(download)
         mbx[i].relayDelete(l, r).then ->
           done()
@@ -76,6 +76,5 @@ describe 'Key Ratchet', ->
   for k in [0...max_test]
     j = window.__globalTest.idx103++
     it "cleanup #{j}", (done)->
-      mbx[window.__globalTest.idx104++]
-        .selfDestruct(true, true).then ->
+      handle done, mbx[window.__globalTest.idx104++].selfDestruct(true, true).then ->
         done()

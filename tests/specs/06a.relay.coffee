@@ -14,7 +14,7 @@ describe 'Relay Ops, wrapper API', ->
 
   [Alice, Bob] = [null, null]
   it 'create mailboxes', (done)->
-    MailBox.new('Alice').then (ret)->
+    handle done, MailBox.new('Alice').then (ret)->
       Alice = ret
       MailBox.new('Bob').then (ret)->
         Bob = ret
@@ -25,14 +25,14 @@ describe 'Relay Ops, wrapper API', ->
   it 'upload message to mailbox :hpk', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    Alice.sendToVia('Bob', r, 'Hi Bob from Alice 202').then (msg)->
+    handle done, Alice.sendToVia('Bob', r, 'Hi Bob from Alice 202').then (msg)->
       window.__globalTest.bob_nonce2 = msg.payload.nonce
       done()
 
   it 'count Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    Bob.connectToRelay(r).then ->
+    handle done, Bob.connectToRelay(r).then ->
       r.count(Bob).then (count)->
         expect(count).equal 1
         done()
@@ -40,7 +40,7 @@ describe 'Relay Ops, wrapper API', ->
   it 'download Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    Bob.connectToRelay(r).then ->
+    handle done, Bob.connectToRelay(r).then ->
       r.download(Bob).then (result)->
         d = result[0]
         Bob.decodeMessage('Alice', d['nonce'], d['data']).then (msg)->
@@ -50,7 +50,7 @@ describe 'Relay Ops, wrapper API', ->
   it 'delete from Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    Bob.connectToRelay(r).then ->
+    handle done, Bob.connectToRelay(r).then ->
       # not deleted anything
       r.delete(Bob, []).then ->
         r.count(Bob).then (count)->
@@ -64,6 +64,6 @@ describe 'Relay Ops, wrapper API', ->
               done()
 
   it 'clear mailboxes', (done) ->
-    Alice.selfDestruct(true).then ->
+    handle done, Alice.selfDestruct(true).then ->
       Bob.selfDestruct(true).then ->
         done()

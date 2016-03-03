@@ -14,7 +14,7 @@ describe 'Relay Ops, low level API', ->
 
   [Alice, Bob] = [null, null]
   it 'create mailboxes', (done)->
-    MailBox.new('Alice').then (ret)->
+    handle done, MailBox.new('Alice').then (ret)->
       Alice = ret
       MailBox.new('Bob').then (ret)->
         Bob = ret
@@ -25,7 +25,7 @@ describe 'Relay Ops, low level API', ->
   it 'upload plaintext message to mailbox :hpk', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().then ->
+    handle done, r.openConnection().then ->
       r.connectMailbox(Alice).then ->
         expect(Alice.sessionKeys).not.empty
         Bob.hpk().then (hpk)->
@@ -38,7 +38,7 @@ describe 'Relay Ops, low level API', ->
   it 'message count in Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().then ->
+    handle done, r.openConnection().then ->
       r.connectMailbox(Bob).then ->
         r.runCmd('count', Bob).then (count)->
           expect(count).equal 1
@@ -47,7 +47,7 @@ describe 'Relay Ops, low level API', ->
   it 'download plaintext Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().then ->
+    handle done, r.openConnection().then ->
       r.connectMailbox(Bob).then ->
         r.runCmd('download', Bob).then (result)->
           expect(result[0].data).equal 'Hi Bob from Alice 101'
@@ -57,7 +57,7 @@ describe 'Relay Ops, low level API', ->
   it 'delete from Bob mailbox', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().then ->
+    handle done, r.openConnection().then ->
       r.connectMailbox(Bob).then ->
         # have not deleted anything
         r.runCmd('delete', Bob, payload: []).then (result)->
@@ -72,7 +72,7 @@ describe 'Relay Ops, low level API', ->
   it 'few bad commands', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().then ->
+    handle done, r.openConnection().then ->
       r.connectMailbox(Bob).then ->
         expect(-> r.runCmd('count2', Bob)).to.throw(Error)
         expect(-> r.runCmd('UPLOAD', Bob)).to.throw(Error)
@@ -80,6 +80,6 @@ describe 'Relay Ops, low level API', ->
         done()
 
   it 'clear mailboxes', (done) ->
-    Alice.selfDestruct(true).then ->
+    handle done, Alice.selfDestruct(true).then ->
       Bob.selfDestruct(true).then ->
         done()

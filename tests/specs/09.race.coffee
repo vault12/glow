@@ -28,7 +28,7 @@ describe 'ZAX Race Conditions', ->
   # create test mailboxes
 
   it 'create mailboxes', (done)->
-    Utils.all [0...max_test].map (i)->
+    handle done, Utils.all [0...max_test].map (i)->
       MailBox.new("mbx_09_#{i}").then (m)->
         mbx.push(m)
     .then ->
@@ -47,14 +47,14 @@ describe 'ZAX Race Conditions', ->
   for k in [0...max_test]
     it "test #{k}", (done)->
       i = window.__globalTest.idx901++
-      mbx[i].sendToVia('target', r, "test msg #{i}=>msg0").then ->
+      handle done, mbx[i].sendToVia('target', r, "test msg #{i}=>msg0").then ->
         mbx[i].relaySend('target', "test msg #{i}=>msg1", r).then ->
           mbx[i].relaySend('target', "test msg #{i}=>msg2", r).then ->
             done()
 
   # get the last messages back
   it 'download', (done)->
-    target.getRelayMessages(r).then (download)->
+    handle done, target.getRelayMessages(r).then (download)->
       ld = download
       if ld.length > 0
         expect(ld[0].msg).to.include 'test msg' if ld[0].msg
@@ -80,5 +80,5 @@ describe 'ZAX Race Conditions', ->
     tasks = []
     for i in [0...max_test]
       tasks.push mbx[i].selfDestruct(true)
-    Utils.all(tasks).then ->
+    handle done, Utils.all(tasks).then ->
       done()

@@ -19,7 +19,7 @@ describe 'Relay Session', ->
   # run this one as blocking async to see if the relay is online for the tests
   it 'get Server Token', (done) ->
 
-    MailBox.new('Alice').then (ret)->
+    handle done, MailBox.new('Alice').then (ret)->
       Alice = ret
       MailBox.new('Bob').then (ret)->
         Bob = ret
@@ -49,7 +49,7 @@ describe 'Relay Session', ->
   it 'get session key', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().then ->
+    handle done, r.openConnection().then ->
       r.online.should.be.true
       r.relayToken.should.not.be.null
       r.clientToken.should.not.be.null
@@ -59,7 +59,7 @@ describe 'Relay Session', ->
   it 'prove mailbox :hpk', (done)->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    r.openConnection().then ->
+    handle done, r.openConnection().then ->
       r.connectMailbox(Alice).then ->
         expect(Alice.sessionKeys).not.empty
         done()
@@ -74,6 +74,6 @@ describe 'Relay Session', ->
     r.openConnection()
 
   it 'clear mailboxes', (done) ->
-    Alice.selfDestruct(true).then ->
+    handle done, Alice.selfDestruct(true).then ->
       Bob.selfDestruct(true).then ->
         done()

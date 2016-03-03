@@ -15,7 +15,7 @@ describe 'Relay Bulk Ops', ->
 
   [Alice, Bob] = [null, null]
   it 'create mailboxes', (done)->
-    MailBox.new('Alice').then (ret)->
+    handle done, MailBox.new('Alice').then (ret)->
       Alice = ret
       MailBox.new('Bob').then (ret)->
         Bob = ret
@@ -30,7 +30,7 @@ describe 'Relay Bulk Ops', ->
   it 'Give missile codes to Bob', (done)->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    Alice.sendToVia('Bob', r, code1).then ->
+    handle done, Alice.sendToVia('Bob', r, code1).then ->
       Alice.relaySend('Bob', code2, r).then ->
         Alice.relaySend('Bob', code3, r).then ->
           Bob.connectToRelay(r).then ->
@@ -42,7 +42,7 @@ describe 'Relay Bulk Ops', ->
   it 'Bob gets missile codes', (done)->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    Bob.getRelayMessages(r).then (_download)->
+    handle done, Bob.getRelayMessages(r).then (_download)->
       download = _download
       expect(download).length.is 3
       msgs = Utils.map download, (m) -> m.msg
@@ -53,7 +53,7 @@ describe 'Relay Bulk Ops', ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
     list = Utils.map download, (i) -> i.nonce
-    Bob.connectToRelay(r).then ->
+    handle done, Bob.connectToRelay(r).then ->
       Bob.relayCount(r).then (count)->
         expect(count).equal 3
         Bob.relayDelete(list, r).then ->
@@ -62,6 +62,6 @@ describe 'Relay Bulk Ops', ->
             done()
 
   it 'clear mailboxes', (done)->
-    Alice.selfDestruct(true).then ->
+    handle done, Alice.selfDestruct(true).then ->
       Bob.selfDestruct(true).then ->
         done()

@@ -44,18 +44,14 @@ class KeyRing extends EventEmitter
         @commKey = commKey
         @saveKey('comm_key', @commKey)
 
+  getNumberOfGuests: ->
+    Object.keys(@guestKeys or {}).length
+
   # Returns a Promise
   _loadGuestKeys: ->
-    @storage.get('guest_registry').then (registry)=>
-      @registry = registry or []
-      @guestKeys = {} # tag -> { pk, hpk }
+    @storage.get('guest_registry').then (guestKeys)=>
+      @guestKeys = guestKeys or {} # tag -> { pk, hpk }
       @guestKeyTimeouts = {}
-      next = Utils.resolve()
-      for r in @registry
-        next = next.then =>
-          @storage.get("guest[#{r}]").then (val)=>
-            @guestKeys[r] = val
-      next
 
   # Returns a Promise
   commFromSeed: (seed)->
@@ -98,31 +94,16 @@ class KeyRing extends EventEmitter
   deleteKey: (tag)->
     @storage.remove(tag)
 
-  # Synchronous
-  _addRegistry: (strGuestTag)->
-    Utils.ensure(strGuestTag)
-    @registry.push(strGuestTag) unless @registry.indexOf(strGuestTag) > -1
-
   # Returns a Promise
   _saveNewGuest: (tag, pk)->
     Utils.ensure(tag and pk)
-    @storage.save("guest[#{tag}]", pk).then =>
-      @storage.save('guest_registry', @registry)
-
-  # Returns a Promise
-  _removeGuestRecord: (tag)->
-    Utils.ensure(tag)
-    @storage.remove("guest[#{tag}]").then =>
-      i = @registry.indexOf tag
-      if i > -1
-        @registry.splice(i, 1)
-        @storage.save('guest_registry', @registry)
+    @storage.save('guest_registry', @guestKeys)
 
   # Returns a Promise
   addGuest: (strGuestTag, b64_pk)->
     Utils.ensure(strGuestTag and b64_pk)
     b64_pk = b64_pk.trimLines()
-    @_addRegistry strGuestTag
+    # @_addRegistry strGuestTag
     @_addGuestRecord(strGuestTag, b64_pk).then (guest)=>
       @_saveNewGuest(strGuestTag, guest)
 
@@ -153,9 +134,8 @@ class KeyRing extends EventEmitter
   removeGuest: (strGuestTag)->
     Utils.ensure(strGuestTag)
     return Utils.resolve() unless @guestKeys[strGuestTag]
-    @guestKeys[strGuestTag] = null # erase the pointer just in case
     delete @guestKeys[strGuestTag]
-    @_removeGuestRecord strGuestTag
+    @storage.save('guest_registry', @guestKeys)
 
   # Synchronous
   getGuestKey: (strGuestTag)->
@@ -174,14 +154,9 @@ class KeyRing extends EventEmitter
   # Returns a Promise
   selfDestruct: (overseerAuthorized)->
     Utils.ensure(overseerAuthorized)
-    next = Utils.resolve()
-    for r in @registry
-      next = next.then =>
-        @removeGuest(r)
-    next.then =>
-      @storage.remove('guest_registry').then =>
-        @storage.remove('comm_key').then =>
-          @storage.selfDestruct(overseerAuthorized)
+    @storage.remove('guest_registry').then =>
+      @storage.remove('comm_key').then =>
+        @storage.selfDestruct(overseerAuthorized)
 
 module.exports = KeyRing
 window.KeyRing = KeyRing if window.__CRYPTO_DEBUG

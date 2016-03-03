@@ -36,7 +36,7 @@ if localStorage
 # instructions at https://github.com/vault12/zax#installation
 
 # select a preset (local vs remote) or edit your own settings
-localTest = false
+localTest = true
 
 if localTest
   # local testing
@@ -73,6 +73,12 @@ window.__globalTest.runTests =
   'relay ratchet':        true
   'relay noise ratchet':  true
   'relay race':           true # todo: false
+
+# Syntactic sugar.
+# Append a `.catch (done)` to the outer-most Promise-returning statement
+# in a test, to correctly feed the thrown Error back to Mocha.
+# Usage: prepend to first promise statement in a test.
+window.handle = (done, promise)-> promise.catch (done)
 
 # In tests you can directly access window.Utils, window.Mailbox, etc.
 # from the console

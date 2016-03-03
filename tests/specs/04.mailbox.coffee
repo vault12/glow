@@ -20,7 +20,7 @@ describe 'MailBox, offline Relay', ->
    msg6, msg7, pt1, pt2, pt3, pt4] = (null for n in [1..11])
 
   it 'create mailbox', (done)->
-    MailBox.new('Alice_mbx').then (ret)->
+    handle done, MailBox.new('Alice_mbx').then (ret)->
       Alice = ret
       MailBox.new('Bob_mbx').then (ret)->
         Bob = ret
@@ -29,21 +29,21 @@ describe 'MailBox, offline Relay', ->
         done()
 
   it 'exchange keys', (done)->
-    expect(Alice.keyRing.registry.length).equal(0)
+    expect(Alice.keyRing.getNumberOfGuests()).equal(0)
     expect(Alice.keyRing.getGuestKey('Bob_mbx')).is.null
-    Alice.keyRing.addGuest('Bob_mbx', Bob.getPubCommKey()).then ->
-      expect(Alice.keyRing.registry.length).equal(1)
+    handle done, Alice.keyRing.addGuest('Bob_mbx', Bob.getPubCommKey()).then ->
+      expect(Alice.keyRing.getNumberOfGuests()).equal(1)
       expect(Alice.keyRing.getGuestKey('Bob_mbx')).is.not.null
 
-      expect(Bob.keyRing.registry.length).equal(0)
+      expect(Bob.keyRing.getNumberOfGuests()).equal(0)
       expect(Bob.keyRing.getGuestKey('Alice_mbx')).is.null
       Bob.keyRing.addGuest('Alice_mbx', Alice.getPubCommKey()).then ->
-        expect(Bob.keyRing.registry.length).equal(1)
+        expect(Bob.keyRing.getNumberOfGuests()).equal(1)
         expect(Bob.keyRing.getGuestKey('Alice_mbx')).is.not.null
         done()
 
   it 'Mailbox from well known seed', (done)->
-    MailBox.fromSeed('hello').then (m)->
+    handle done, MailBox.fromSeed('hello').then (m)->
       pk = m.keyRing.getPubCommKey()
       pk.should.equal '2DM+z1PaxGXVnzsDh4zv+IlH7sV8llEFoEmg9fG3pRA='
       m.hpk().then (ret)->
@@ -54,7 +54,7 @@ describe 'MailBox, offline Relay', ->
           done()
 
   it 'encrypt message', (done)->
-    Alice.encodeMessage('Bob_mbx', pt1 = 'Bob, I heard from Наталья
+    handle done, Alice.encodeMessage('Bob_mbx', pt1 = 'Bob, I heard from Наталья
       Дубровская we have a problem with the water chip.').then (ret)->
       msg1 = ret
       Bob.encodeMessage('Alice_mbx', pt2 = 'Alice, I will dispatch one
@@ -63,7 +63,7 @@ describe 'MailBox, offline Relay', ->
         done()
 
   it 'decrypt message', (done)->
-    Bob.decodeMessage('Alice_mbx', msg1.nonce, msg1.ctext).then (m1)->
+    handle done, Bob.decodeMessage('Alice_mbx', msg1.nonce, msg1.ctext).then (m1)->
       Alice.decodeMessage('Bob_mbx', msg2.nonce, msg2.ctext).then (m2)->
         pt1.should.equal(m1)
         pt2.should.equal(m2)
@@ -78,6 +78,6 @@ describe 'MailBox, offline Relay', ->
     Alice.createSessionKey('session_id_123')
 
   it 'clear mailboxes', (done)->
-    Alice.selfDestruct(true).then ->
+    handle done, Alice.selfDestruct(true).then ->
       Bob.selfDestruct(true).then ->
         done()

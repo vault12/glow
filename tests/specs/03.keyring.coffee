@@ -19,7 +19,7 @@ describe 'KeyRing with keys', ->
   k1 = null
 
   it 'create keyring', (done)->
-    KeyRing.new('main_test').then (r)->
+    handle done, KeyRing.new('main_test').then (r)->
       r1 = r
       KeyRing.new('backup_test').then (r)->
         r2 = r
@@ -27,7 +27,6 @@ describe 'KeyRing with keys', ->
           expect(r.storage).is.not.null
           expect(r.commKey).is.not.null
           expect(r.guestKeys).is.not.null
-          expect(r.registry).is.not.null
         done()
 
   key_buffer = []
@@ -39,7 +38,7 @@ describe 'KeyRing with keys', ->
         expect(k.fromBase64().length).equal(32) # 32 byte buffer
 
   it 'check re-load of system keys', (done)->
-    KeyRing.new('main_test').then (r)->
+    handle done, KeyRing.new('main_test').then (r)->
       rc1 = r
       KeyRing.new('backup_test').then (r)->
         rc2 = r
@@ -54,25 +53,25 @@ describe 'KeyRing with keys', ->
   a = null
   b = null
   it 'add guests', (done)->
-    Nacl.makeKeyPair().then (kp)->
+    handle done, Nacl.makeKeyPair().then (kp)->
       a = kp
       Nacl.makeKeyPair().then (kp)->
         b = kp
         Utils.all [r1, r2].map (r)->
           # null calls throw errors
           expect(-> r.addGuest(null, null)).to.throw(Utils.ENSURE_ERROR_MSG)
-          expect(r.registry.length).equal(0)
+          expect(r.getNumberOfGuests()).equal(0)
           expect(-> r.addGuest(null, '123')).to.throw(Utils.ENSURE_ERROR_MSG)
-          expect(r.registry.length).equal(0)
+          expect(r.getNumberOfGuests()).equal(0)
           expect(-> r.addGuest('123', null)).to.throw(Utils.ENSURE_ERROR_MSG)
-          expect(r.registry.length).equal(0)
+          expect(r.getNumberOfGuests()).equal(0)
 
           r.addGuest('Alice', a.strPubKey()).then ->
-            expect(r.registry.length).equal(1)
+            expect(r.getNumberOfGuests()).equal(1)
             expect(r.guestKeys['Alice']).not.null
 
             r.addGuest('Bob', b.strPubKey()).then ->
-              expect(r.registry.length).equal(2)
+              expect(r.getNumberOfGuests()).equal(2)
               expect(r.guestKeys['Bob']).not.null
         .then ->
           done()
@@ -87,22 +86,20 @@ describe 'KeyRing with keys', ->
         expect(b.boxPk[i]).equal(n)
 
   it 'remove guests', (done)->
-    Utils.all [r1, r2].map (r)->
+    handle done, Utils.all [r1, r2].map (r)->
       r.removeGuest('Alice').then ->
-        expect(r.registry.length).equal(1)
+        expect(r.getNumberOfGuests()).equal(1)
         expect(r.guestKeys['Alice']).to.be.undefined
-        expect(r.registry.indexOf('Alice')).equal(-1)
 
         r.removeGuest('Bob').then ->
-          expect(r.registry.length).equal(0)
+          expect(r.getNumberOfGuests()).equal(0)
           expect(r.guestKeys['Bob']).to.be.undefined
-          expect(r.registry.indexOf('Bob')).equal(-1)
     .then ->
       done()
 
   [spectre, jb] = [null, null]
   it 'create from secret key', (done)->
-    KeyRing.new('missile_command_1').then (k)->
+    handle done, KeyRing.new('missile_command_1').then (k)->
       spectre = k
       write_on_napkin = spectre.commKey.strSecKey()
 
@@ -114,7 +111,7 @@ describe 'KeyRing with keys', ->
           done()
 
   it 'guest persistence', (done)->
-    Nacl.random().then (ret)->
+    handle done, Nacl.random().then (ret)->
       id1 = ret.toBase64()
       Nacl.makeKeyPair().then (ret)->
         key = ret.strPubKey()
@@ -131,6 +128,31 @@ describe 'KeyRing with keys', ->
               expect(keyA.toString()).equal(keyB.toString())
               done()
 
+  it 'multi guest persistence', (done)->
+    handle done, Nacl.random().then (ret)->
+      id1 = ret.toBase64()
+      Nacl.makeKeyPair().then (ret)->
+        key1 = ret.strPubKey()
+        Nacl.makeKeyPair().then (ret)->
+          key2 = ret.strPubKey()
+
+          KeyRing.new(id1).then (ret)->
+            k1 = ret
+            k1.addGuest('guest1', key1).then ->
+              k1.addGuest('guest2', key2).then ->
+                keyA_orig = k1.getGuestKey('guest1')
+                keyB_orig = k1.getGuestKey('guest2')
+
+                KeyRing.new(id1).then (k2)->
+                  keyA = k2.getGuestKey('guest1')
+                  keyB = k2.getGuestKey('guest2')
+                  expect(keyA).is.not.null
+                  expect(keyB).is.not.null
+
+                  expect(keyA.toString()).equal(keyA_orig.toString())
+                  expect(keyB.toString()).equal(keyB_orig.toString())
+                  done()
+
   it 'emits guest timeout event', (done)->
     st = Config.RELAY_SESSION_TIMEOUT
     Config.RELAY_SESSION_TIMEOUT = 1
@@ -141,7 +163,7 @@ describe 'KeyRing with keys', ->
     k1.addTempGuest('TmpAlice', '123')
 
   it 'clean up storage', (done)->
-    Utils.all [r1, r2, spectre, jb, k1].map (r)->
+    handle done, Utils.all [r1, r2, spectre, jb, k1].map (r)->
       r.selfDestruct(true)
     .then ->
       done()

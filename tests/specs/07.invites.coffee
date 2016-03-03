@@ -18,7 +18,7 @@ describe 'Invite codes', ->
   [aliceTemp, bobCode] = [null, null]
   sms_invite = null
   it 'create mailboxes', (done)->
-    MailBox.new('Alice').then (ret)->
+    handle done, MailBox.new('Alice').then (ret)->
       Alice = ret
       MailBox.new('Bob').then (ret)->
         Bob = ret
@@ -31,7 +31,7 @@ describe 'Invite codes', ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
 
-    MailBox.new('aliceTemp').then (ret)->
+    handle done, MailBox.new('aliceTemp').then (ret)->
       aliceTemp = ret
       # Alice sends an invite via SMS to Bob and Bob receives sms_invite
       Nacl.random(32).then (seed)->
@@ -58,7 +58,7 @@ describe 'Invite codes', ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
 
-    MailBox.fromSeed(sms_invite.seed).then (ret)->
+    handle done, MailBox.fromSeed(sms_invite.seed).then (ret)->
       bobCode = ret
       bobCode.keyRing.addGuest('aliceTemp', sms_invite.pkey).then ->
         bobCode.connectToRelay(r).then ->
@@ -78,7 +78,7 @@ describe 'Invite codes', ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
 
-    bobCode.sendToVia('aliceTemp', r,
+    handle done, bobCode.sendToVia('aliceTemp', r,
       dest: 'Alice'
       iam: 'Bob'
       content: 'My public key'
@@ -91,7 +91,7 @@ describe 'Invite codes', ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
 
-    aliceTemp.getRelayMessages(r).then (download)->
+    handle done, aliceTemp.getRelayMessages(r).then (download)->
       bob_data = download[0].msg
 
       expect(bob_data.dest).equal 'Alice'
@@ -110,7 +110,7 @@ describe 'Invite codes', ->
     # Alice sends her invite block to Bob over a secure channel
 
   it 'clear mailboxes', (done)->
-    Alice.selfDestruct(true).then ->
+    handle done, Alice.selfDestruct(true).then ->
       Bob.selfDestruct(true).then ->
 
       if not __globalTest.offline
