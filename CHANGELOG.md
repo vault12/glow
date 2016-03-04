@@ -1,3 +1,7 @@
+### v2.0.1
+
+* Leveraging web workers
+
 ### v2.0.0
 
 * Support for async access
