@@ -1,12 +1,13 @@
 # Copyright (c) 2015 Vault12, Inc.
 # MIT License https://opensource.org/licenses/MIT
-chai             = require 'chai' # http://chaijs.com/ BDD/TDD assertion lib
+chai                  = require 'chai' # http://chaijs.com/ BDD/TDD assertion lib
 # https://github.com/domenic/chai-as-promised/ extends Chai w/asserts, promises
-chaiAsPromised   = require 'chai-as-promised'
-CryptoStorage    = require 'crypto_storage'
-SimpleTestDriver = require 'test_driver'
-
-Utils             = require 'utils'
+chaiAsPromised        = require 'chai-as-promised'
+CryptoStorage         = require 'crypto_storage'
+SimpleTestDriver      = require 'test_driver'
+JsNaclWebWorkerDriver = require 'js_nacl_worker_driver'
+Nacl                  = require 'nacl'
+Utils                 = require 'utils'
 
 # uncomment, should we need to bundle q-xhr into tests.js:
 # (leave in as an example usage)
@@ -56,6 +57,12 @@ else
       tiny: 50000
       mid: 130000
       long: 500000
+
+# Test with the web worker js-nacl driver?
+window.__globalTest.naclWorker = true
+
+if window.__globalTest.naclWorker
+  Nacl.setNaclImpl(new JsNaclWebWorkerDriver())
 
 # control which tests to run
 window.__globalTest.runTests =

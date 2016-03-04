@@ -2,17 +2,19 @@
 # MIT License https://opensource.org/licenses/MIT
 
 module.exports =
-  Utils:                require 'utils'
-  Mixins:               require 'mixins'
-  Nacl:                 require 'nacl'
-  Keys:                 require 'keys'
-  SimpleStorageDriver:  require 'test_driver'
-  CryptoStorage:        require 'crypto_storage'
-  KeyRing:              require 'keyring'
-  MailBox:              require 'mailbox'
-  Relay:                require 'relay'
-  RachetBox:            require 'rachetbox'
-  Config:               require 'config'
+  Utils:                  require 'utils'
+  Mixins:                 require 'mixins'
+  Nacl:                   require 'nacl'
+  Keys:                   require 'keys'
+  SimpleStorageDriver:    require 'test_driver'
+  CryptoStorage:          require 'crypto_storage'
+  KeyRing:                require 'keyring'
+  MailBox:                require 'mailbox'
+  Relay:                  require 'relay'
+  RachetBox:              require 'rachetbox'
+  Config:                 require 'config'
+  JsNaclDriver:           require 'js_nacl_driver'
+  JsNaclWebWorkerDriver:  require 'js_nacl_worker_driver'
 
   # naclImpl required API:
   # - crypto_secretbox_KEYBYTES (constant)
@@ -35,8 +37,7 @@ module.exports =
     @Nacl.setNaclImpl(naclImpl)
 
   # promiseImpl requried API:
-  # - resolve(val): Promise(val) - return a resolved promise
-  # - reject(val): Promise(rejected: error) - return a rejected promise
+  # - promise(func(resolve, reject)): Promise - a deferrable Promise
   # - all([promises]): Promise - resolve all elements
   # The Promise object is expected to implement:
   # - then(func(result)): Promise

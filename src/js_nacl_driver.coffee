@@ -5,24 +5,6 @@ Utils = require 'utils'
 # Nacl driver for the js-nacl emscripten implementation
 class JsNaclDriver
 
-  @API: [
-    'crypto_secretbox_random_nonce'
-    'crypto_secretbox'
-    'crypto_secretbox_open'
-    'crypto_box'
-    'crypto_box_open'
-    'crypto_box_random_nonce'
-    'crypto_box_keypair'
-    'crypto_box_keypair_from_raw_sk'
-    'crypto_box_keypair_from_seed'
-    'crypto_hash_sha256'
-    'random_bytes'
-    'encode_utf8'
-    'decode_utf8'
-    'to_hex'
-    'from_hex'
-  ]
-
   _instance: null
   _unloadTimer:  null
 
@@ -38,7 +20,7 @@ class JsNaclDriver
 
     @.crypto_secretbox_KEYBYTES = @use().crypto_secretbox_KEYBYTES
 
-    JsNaclDriver.API.forEach (f)=>
+    require('nacl').API.forEach (f)=>
       @[f] = =>
         inst = @use()
         try

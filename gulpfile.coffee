@@ -18,7 +18,7 @@ global.argv = subarg(process.argv.slice(2)) # used for tunnel
 conf =
   lib: ['src/main.coffee', 'theglow.js']
   tests: [['src/main.coffee'].concat(glob.sync('tests/**/*.coffee')), 'tests.js']
-  watch: ['src/**/*.coffee', 'tests/**/*.coffee']
+  watch: ['src/**/*.coffee', 'src/**/*.js', 'tests/**/*.coffee']
   dist_dir: 'dist'
   clean: ['dist/*.js', 'dist/*.map']
 

@@ -115,14 +115,14 @@ class Utils
   @setDefaultPromiseImpl: ->
     if Promise?
       @setPromiseImpl
-        resolve: (val)->
-          Promise.resolve(val)
+        promise: (resolver)->
+          new Promise(resolver)
         all: (arr)->
           Promise.all(arr)
     else if Q?
       @setPromiseImpl
-        resolve: (val)->
-          Q.fcall(val)
+        promise: (resolver)->
+          Q.promise(resolver)
         all: (arr)->
           Q.all(arr)
     else
@@ -175,13 +175,17 @@ class Utils
 
   # Create a resolved Promise
   @resolve: (value)->
-    @getPromiseImpl().resolve(value)
+    @getPromiseImpl().promise (res, rej)-> res(value)
 
+  # Create a rejected Promsie
   @reject: (error)->
-    @getPromiseImpl().reject(error)
+    @getPromiseImpl().promise (res, rej)-> rej(error)
+
+  # Create a deferred Promise
+  @promise: (resolver)->
+    @getPromiseImpl().promise (resolver)
 
   # Wait for all promises
-  # TODO: may have to do this a forgiving .serial() if there are races
   @all: (promises)->
     @getPromiseImpl().all(promises)
 

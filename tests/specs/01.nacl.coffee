@@ -11,17 +11,18 @@ Nacl = require 'nacl'
 describe 'NACL', ->
   return unless window.__globalTest.runTests['nacl']
 
-  it 'factory load/unload', (done)->
-    jsnacl = Nacl.use()
-    handle done, Nacl.makeSecretKey().then ->
-      expect(jsnacl._instance).not.null
-      setTimeout( ->
-        s = if jsnacl._instance then 'OK!' else 'FAIL!'
-      , 5 * 1000)
-      setTimeout( ->
-        s = if jsnacl._instance then 'FAIL!' else 'OK!'
-      , 20 * 1000)
-      done()
+  unless window.__globalTest.naclWorker
+    it 'factory load/unload', (done)->
+      jsnacl = Nacl.use()
+      handle done, Nacl.makeSecretKey().then ->
+        expect(jsnacl._instance).not.null
+        setTimeout( ->
+          s = if jsnacl._instance then 'OK!' else 'FAIL!'
+        , 5 * 1000)
+        setTimeout( ->
+          s = if jsnacl._instance then 'FAIL!' else 'OK!'
+        , 20 * 1000)
+        done()
 
   it 'Hash₂ of utf8 strings', (done)->
     str = 'hello world | В военное время значение π достигало 4ех'

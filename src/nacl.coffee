@@ -9,6 +9,24 @@ JsNaclDriver  = require 'js_nacl_driver'
 
 class Nacl
 
+  @API: [
+    'crypto_secretbox_random_nonce'
+    'crypto_secretbox'
+    'crypto_secretbox_open'
+    'crypto_box'
+    'crypto_box_open'
+    'crypto_box_random_nonce'
+    'crypto_box_keypair'
+    'crypto_box_keypair_from_raw_sk'
+    'crypto_box_keypair_from_seed'
+    'crypto_hash_sha256'
+    'random_bytes'
+    'encode_utf8'
+    'decode_utf8'
+    'to_hex'
+    'from_hex'
+  ]
+
   naclImpl: null
 
   # Synchronous
