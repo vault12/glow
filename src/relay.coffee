@@ -13,7 +13,8 @@ class Relay extends EventEmitter
   constructor: (@url = null)->
     @_resetState() # until a succesful handshake
     # plugins can add their own commands to specific relays
-    @RELAY_COMMANDS = ['count', 'upload', 'download', 'delete']
+    @RELAY_COMMANDS = ['count', 'upload', 'download',
+                       'message_status', 'delete']
 
   # Returns a Promise
   openConnection: ->
@@ -130,16 +131,28 @@ class Relay extends EventEmitter
           "#{message.ctext}")
         .then (d)=>
           # no data in the response; return msg obj for tests.nonce
-          return params if cmd is 'upload'
           throw new Error("#{@url} - #{cmd} error") unless d?
-          if cmd in ['count', 'download']
-            @_processResponse(d, mbx, cmd)
+          if cmd in ['count', 'upload', 'download','message_status']
+            @_processResponse(d, mbx, cmd, params)
           else
             JSON.parse(d)
 
-  # Returns a Promise
-  _processResponse: (d, mbx, cmd)->
+  # Returns a decrypt promise or direct response data
+  _processResponse: (d, mbx, cmd, params)->
     datain = @_processData d
+
+    if cmd is 'upload'
+      unless datain.length is 1 and datain[0].length is Config.RELAY_TOKEN_B64
+        throw new Error("#{@url} - #{cmd}: Bad response")
+      params.storage_token = d
+      return params
+
+    if cmd is 'message_status'
+      unless datain.length is 1
+        throw new Error("#{@url} - #{cmd}: Bad response")
+      return parseInt(datain[0])
+    
+    # rest of commands
     unless datain.length is 2
       throw new Error("#{@url} - #{cmd}: Bad response")
     nonce = datain[0]
@@ -163,6 +176,12 @@ class Relay extends EventEmitter
     @runCmd('upload', mbx,
       to: toHpk.toBase64()
       payload: payload)
+
+  # Returns a Promise
+  message_status: (mbx, storage_token)->
+    @runCmd('message_status', mbx,
+      token: storage_token
+    )
 
   # Returns a Promise
   download: (mbx)->

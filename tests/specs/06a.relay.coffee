@@ -25,9 +25,19 @@ describe 'Relay Ops, wrapper API', ->
   it 'upload message to mailbox :hpk', (done) ->
     return done() if __globalTest.offline
     r = new Relay(__globalTest.host)
-    handle done, Alice.sendToVia('Bob', r, 'Hi Bob from Alice 202').then (msg)->
+    handle done, Alice.sendToVia('Bob', r, 'Hi Bob from Alice 202').then (msg) ->
       window.__globalTest.bob_nonce2 = msg.payload.nonce
+      window.__globalTest.alice_storage_token = msg.storage_token
       done()
+
+  it 'check uploaded message status', (done) ->
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
+    st = window.__globalTest.alice_storage_token
+    handle done, Alice.connectToRelay(r).then ->
+      r.message_status(Alice,st).then (ttl)->
+        expect(ttl).above 0
+        done()
 
   it 'count Bob mailbox', (done) ->
     return done() if __globalTest.offline
@@ -62,6 +72,15 @@ describe 'Relay Ops, wrapper API', ->
             r.count(Bob).then (count)->
               expect(count).equal 0
               done()
+
+  it 'check deleted message status', (done) ->
+    return done() if __globalTest.offline
+    r = new Relay(__globalTest.host)
+    st = window.__globalTest.alice_storage_token
+    handle done, Alice.connectToRelay(r).then ->
+      r.message_status(Alice,st).then (ttl)->
+        expect(ttl).equal -2  # message is now deleted
+        done()
 
   it 'clear mailboxes', (done) ->
     handle done, Alice.selfDestruct(true).then ->

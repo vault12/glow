@@ -188,6 +188,16 @@ class MailBox extends EventEmitter
     relay.count(@).then (result)=>
       parseInt(result)
 
+  # Gets the status of previous sent message as redis TTL:
+  # -2 : missing key
+  # -1 : key never expires
+  # 0+ : key time to live in seconds
+  # Returns a Promise(ttl)
+  relay_msg_status: (relay, storage_token) ->
+    Utils.ensure(relay)
+    relay.message_status(@,storage_token).then (ttl) =>
+      ttl
+
   # Sends a free-form object to a guest we already have in our keyring
   # Returns a Promise
   relaySend: (guest, msg, relay)->
