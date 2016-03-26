@@ -37,7 +37,7 @@ if localStorage
 # instructions at https://github.com/vault12/zax#installation
 
 # select a preset (local vs remote) or edit your own settings
-localTest = true
+localTest = false
 
 if localTest
   # local testing
@@ -76,10 +76,10 @@ window.__globalTest.runTests =
   'relay wrapper':        true
   'relay bulk':           true
   'relay invites':        true
-  'relay stress':         false
-  'relay ratchet':        false
-  'relay noise ratchet':  false
-  'relay race':           false # todo: false
+  'relay stress':         true
+  'relay ratchet':        true
+  'relay noise ratchet':  true
+  'relay race':           true # todo: false
 
 # Syntactic sugar.
 # Append a `.catch (done)` to the outer-most Promise-returning statement
