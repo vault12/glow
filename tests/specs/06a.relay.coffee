@@ -35,7 +35,7 @@ describe 'Relay Ops, wrapper API', ->
     r = new Relay(__globalTest.host)
     st = window.__globalTest.alice_storage_token
     handle done, Alice.connectToRelay(r).then ->
-      r.message_status(Alice,st).then (ttl)->
+      Alice.relay_msg_status(r,st).then (ttl)->
         expect(ttl).above 0
         done()
 
