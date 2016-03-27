@@ -1,3 +1,7 @@
+### v2.0.2
+
+* Status message support for update calls
+
 ### v2.0.1
 
 * Leveraging web workers
