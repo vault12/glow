@@ -10,10 +10,8 @@
     #mocha li.failures em { color: red; }
   </style>
   <!-- A+ Promised Http Requests; comment out to use Zepto -->
-  <script type="text/javascript" src="node_modules/q/q.js"></script>
-  <script type="text/javascript" src="node_modules/q-xhr/q-xhr.js"></script>
-
-  <!-- Zepto can be used for Ajax (in absence of q-xhr) and OPTIONAL $.extend + $.map -->
+  <script type="text/javascript" src="node_modules/axios/dist/axios.js"></script>
+  <!-- Zepto can be used for Ajax (in absence of axios) and OPTIONAL $.extend + $.map -->
   <!-- <script type="text/javascript" src="lib/zepto.js"></script> -->
 
   <script type="text/javascript" src="node_modules/js-nacl/lib/nacl_factory.js"></script>
@@ -26,7 +24,7 @@
   <script type="text/javascript" src="node_modules/mocha/mocha.js"></script>
   <script type="text/javascript">
     mocha.setup('bdd')
-    // Kick off the unit tests for theglow library 
+    // Kick off the unit tests for theglow library
     if (window.mochaPhantomJS)
       mochaPhantomJS.run();
     else

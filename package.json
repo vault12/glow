@@ -21,6 +21,7 @@
   "main": "lib/theglow.js",
   "license": "MIT",
   "devDependencies": {
+    "axios": "^0.12.0",
     "browser-sync": "^2.10.0",
     "browserify": "^12.0.1",
     "browserify-coffeelint": "^1.2.0",
@@ -37,8 +38,6 @@
     "gulp-sourcemaps": "^1.6.0",
     "gulp-uglify": "^1.5.1",
     "mocha": "^2.3.4",
-    "q": "^1.4.1",
-    "q-xhr": "youurayy/q-xhr",
     "source-map-support": "^0.3.3",
     "subarg": "^1.0.0",
     "vinyl-buffer": "^1.0.0",
