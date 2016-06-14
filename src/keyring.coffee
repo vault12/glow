@@ -118,7 +118,7 @@ class KeyRing extends EventEmitter
   timeToGuestExpiration: (strGuestTag)->
     Utils.ensure(strGuestTag)
     entry = @guestKeyTimeouts[strGuestTag]
-    return 0 if not timeoutEntry
+    return 0 if not entry
     Math.max(Config.RELAY_SESSION_TIMEOUT - (Date.now() - entry.startTime), 0)
 
   # Synchronous
