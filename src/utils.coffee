@@ -199,6 +199,16 @@ class Utils
         iter(arr[++i]) if i < arr.length
     iter(arr[++i])
 
+  # increment byte coutner like a number
+  # from the least to the most significant bit.
+  @incrementByteCounter: (counter)->
+    for b, i in counter by - 1
+      if b == 255
+        counter[i] = 0
+      else
+        counter[i]++
+        return
+
   # Ensure every argument is truish
   @ENSURE_ERROR_MSG = 'invalid arguments'
   @ensure: ()->

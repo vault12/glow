@@ -32,7 +32,16 @@ class MailBox extends EventEmitter
     mbx.sessionTimeout = {}
     KeyRing.new(mbx.identity, strMasterKey).then (keyRing)->
       mbx.keyRing = keyRing
-      mbx
+      # setup the nonce counter here to avoid any chance of races between
+      # late init from storage and direct get from instance.
+      mbx.keyRing.storage.get('_nonce_counter').then (_nonceCounter)->
+        if _nonceCounter
+          mbx._nonceCounter = _nonceCounter.fromBase64()
+          mbx
+        else
+          mbx._nonceCounter = new Uint8Array(24)
+          mbx.keyRing.storage.save('_nonce_counter', mbx._nonceCounter.toBase64()).then ->
+            mbx
 
   # You can create a Mailbox where the secret identity key is derived from a
   # well-known seed.
@@ -251,7 +260,8 @@ class MailBox extends EventEmitter
   # Returns a Promise
   selfDestruct: (overseerAuthorized)->
     Utils.ensure(overseerAuthorized)
-    @keyRing.selfDestruct(overseerAuthorized)
+    @keyRing.storage.remove('_nonce_counter').then =>
+      @keyRing.selfDestruct(overseerAuthorized)
 
   # --- Protected helpers ---
 
@@ -289,7 +299,7 @@ class MailBox extends EventEmitter
   # Makes a timestamp nonce that a relay expects for any crypto operations.
   # timestamp is the first 8 bytes, the rest is random
   # Returns a Promise
-  _makeNonce: (time = parseInt(Date.now() / 1000))->
+  _makeNonceTimestamp: (time = parseInt(Date.now() / 1000))->
     Nacl.use().crypto_box_random_nonce().then (nonce)->
       throw new Error('RNG failed, try again?') unless nonce? and nonce.length is 24
       # split timestamp integer as an array of bytes
@@ -298,6 +308,16 @@ class MailBox extends EventEmitter
       nonce[i] = 0 for i in [0..7]
       nonce[8 - bytes.length + i] = bytes[i] for i in [0..(bytes.length - 1)]
       nonce
+
+  # Returns a Promise
+  # Makes a serial counter-based nonce.
+  # Uses 24 byte array to maintain compatibility  with other types of nonce.
+  _makeNonce: ->
+    Utils.incrementByteCounter(@_nonceCounter)
+    @keyRing.storage.save('_nonce_counter', @_nonceCounter.toBase64()).then =>
+      a = @_nonceCounter.slice(0)
+      console.log 'nonce: ' + a.toBase64()
+      a
 
 module.exports = MailBox
 window.MailBox = MailBox if window.__CRYPTO_DEBUG
