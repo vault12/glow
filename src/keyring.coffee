@@ -130,7 +130,7 @@ class KeyRing extends EventEmitter
         pk: strPubKey
         hpk: h2.toBase64()
       if @guestKeyTimeouts[strGuestTag]
-        clearTimeout @guestKeyTimeouts[strGuestTag]
+        clearTimeout @guestKeyTimeouts[strGuestTag].timeoutId
       @guestKeyTimeouts[strGuestTag] =
         timeoutId: Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
           delete @guestKeys[strGuestTag]
