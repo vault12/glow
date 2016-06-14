@@ -315,9 +315,7 @@ class MailBox extends EventEmitter
   _makeNonce: ->
     Utils.incrementByteCounter(@_nonceCounter)
     @keyRing.storage.save('_nonce_counter', @_nonceCounter.toBase64()).then =>
-      a = @_nonceCounter.slice(0)
-      console.log 'nonce: ' + a.toBase64()
-      a
+      @_nonceCounter.slice(0)
 
 module.exports = MailBox
 window.MailBox = MailBox if window.__CRYPTO_DEBUG
