@@ -72,9 +72,10 @@ class MailBox extends EventEmitter
   # Synchronous
   timeToSessionExpiration: (sess_id)->
     session = @sessionTimeout[sess_id]
-    if !session
-      return 0
-    Math.max(Config.RELAY_SESSION_TIMEOUT - (Date.now() - session.startTime), 0)
+    return 0 if not session
+    sesExp = Math.max(Config.RELAY_SESSION_TIMEOUT - (Date.now() - session.startTime), 0)
+    guExp = @keyRing.timeToGuestExpiration(sess_id)
+    Math.min(sesExp, guExp)
 
   # Each session with each Zax Relay creates its own temporary session keys
   # Returns a Promise
@@ -105,7 +106,8 @@ class MailBox extends EventEmitter
   # Synchronous
   isConnectedToRelay: (relay)->
     Utils.ensure(relay)
-    Boolean(@sessionKeys[relay.relayId()])
+    relayId = relay.relayId()
+    Boolean(@sessionKeys[relayId]) and Boolean(@_gPk(relayId))
 
   # --- Low level encoding/decoding ---
 

@@ -115,6 +115,12 @@ class KeyRing extends EventEmitter
         pk: b64_pk
         hpk: h2.toBase64()
 
+  timeToGuestExpiration: (strGuestTag)->
+    Utils.ensure(strGuestTag)
+    entry = @guestKeyTimeouts[strGuestTag]
+    return 0 if not timeoutEntry
+    Math.max(Config.RELAY_SESSION_TIMEOUT - (Date.now() - entry.startTime), 0)
+
   # Synchronous
   addTempGuest: (strGuestTag, strPubKey)->
     Utils.ensure(strGuestTag, strPubKey)
@@ -125,10 +131,12 @@ class KeyRing extends EventEmitter
         hpk: h2.toBase64()
       if @guestKeyTimeouts[strGuestTag]
         clearTimeout @guestKeyTimeouts[strGuestTag]
-      @guestKeyTimeouts[strGuestTag] = Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
-        delete @guestKeys[strGuestTag]
-        delete @guestKeyTimeouts[strGuestTag]
-        @emit 'tmpguesttimeout', strGuestTag
+      @guestKeyTimeouts[strGuestTag] =
+        timeoutId: Utils.delay Config.RELAY_SESSION_TIMEOUT, =>
+          delete @guestKeys[strGuestTag]
+          delete @guestKeyTimeouts[strGuestTag]
+          @emit 'tmpguesttimeout', strGuestTag
+        startTime: Date.now()
 
   # Returns a Promise
   removeGuest: (strGuestTag)->
