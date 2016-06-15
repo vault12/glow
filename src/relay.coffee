@@ -139,7 +139,7 @@ class Relay extends EventEmitter
 
   # Returns a decrypt promise or direct response data
   _processResponse: (d, mbx, cmd, params)->
-    datain = @_processData d
+    datain = @_processData String(d)
 
     if cmd is 'upload'
       unless datain.length is 1 and datain[0].length is Config.RELAY_TOKEN_B64
@@ -151,7 +151,7 @@ class Relay extends EventEmitter
       unless datain.length is 1
         throw new Error("#{@url} - #{cmd}: Bad response")
       return parseInt(datain[0])
-    
+
     # rest of commands
     unless datain.length is 2
       throw new Error("#{@url} - #{cmd}: Bad response")
