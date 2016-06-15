@@ -32,16 +32,7 @@ class MailBox extends EventEmitter
     mbx.sessionTimeout = {}
     KeyRing.new(mbx.identity, strMasterKey).then (keyRing)->
       mbx.keyRing = keyRing
-      # setup the nonce counter here to avoid any chance of races between
-      # late init from storage and direct get from instance.
-      mbx.keyRing.storage.get('_nonce_counter').then (_nonceCounter)->
-        if _nonceCounter
-          mbx._nonceCounter = _nonceCounter.fromBase64()
-          mbx
-        else
-          mbx._nonceCounter = new Uint8Array(24)
-          mbx.keyRing.storage.save('_nonce_counter', mbx._nonceCounter.toBase64()).then ->
-            mbx
+      mbx
 
   # You can create a Mailbox where the secret identity key is derived from a
   # well-known seed.
@@ -263,8 +254,7 @@ class MailBox extends EventEmitter
   # Returns a Promise
   selfDestruct: (overseerAuthorized)->
     Utils.ensure(overseerAuthorized)
-    @keyRing.storage.remove('_nonce_counter').then =>
-      @keyRing.selfDestruct(overseerAuthorized)
+    @keyRing.selfDestruct(overseerAuthorized)
 
   # --- Protected helpers ---
 
