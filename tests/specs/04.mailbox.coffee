@@ -4,6 +4,7 @@ window.__CRYPTO_DEBUG = true # Expose #theglow objects as window globals
 
 expect  = require('chai').expect
 
+Utils   = require 'utils'
 MailBox = require 'mailbox'
 Nacl    = require 'nacl'
 Relay   = require 'relay'
@@ -42,6 +43,17 @@ describe 'MailBox, offline Relay', ->
         expect(Bob.keyRing.getGuestKey('Alice_mbx')).is.not.null
         done()
 
+  it 'nonces with data', (done)->
+    data = 0xCDEF89AB
+    handle done, Alice._makeNonce().then (n1)=>
+      # random nonce with timestamp only
+      expect(Alice._nonceData n1).is.not.equal data
+
+      # random nonce with extra data, like message counter
+      Alice._makeNonce(data).then (n2)=>
+        expect(Alice._nonceData n2).is.equal data
+        done()
+
   it 'Mailbox from well known seed', (done)->
     handle done, MailBox.fromSeed('hello').then (m)->
       pk = m.keyRing.getPubCommKey()
@@ -68,6 +80,7 @@ describe 'MailBox, offline Relay', ->
         pt1.should.equal(m1)
         pt2.should.equal(m2)
         done()
+
 
   it 'emits session timeout event', (done)->
     st = Config.RELAY_SESSION_TIMEOUT

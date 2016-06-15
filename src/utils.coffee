@@ -142,6 +142,12 @@ class Utils
     top = floor lg(n) / lg(256)
     new Uint8Array( floor(n / pw(256, i)) % 256 for i in [top..0] )
 
+  @atoi: (a) ->
+    l = a.length-1
+    sum = 0
+    sum += v*Math.pow(256,l-i) for v,i in a
+    sum
+
   # returns true if the rightmost n bits of a byte are 0
   @firstZeroBits: (byte, n) ->
     byte is ((byte >> n) << n)

@@ -121,9 +121,9 @@ class MailBox extends EventEmitter
   # --- Low level encoding/decoding ---
 
   # Returns a Promise
-  rawEncodeMessage: (msg, pkTo, skFrom)->
+  rawEncodeMessage: (msg, pkTo, skFrom, nonceData = null)->
     Utils.ensure(msg, pkTo, skFrom)
-    @_makeNonce().then (nonce)=>
+    @_makeNonce(nonceData).then (nonce)=>
       @_parseData(msg).then (data)=>
         Nacl.use().crypto_box(data, nonce, pkTo, skFrom).then (ctext)=>
           nonce: nonce.toBase64()
@@ -145,6 +145,9 @@ class MailBox extends EventEmitter
     Utils.ensure(guest, msg)
     throw new Error("encodeMessage: don't know guest #{guest}") unless (gpk = @_gPk(guest))
     sk = @_getSecretKey(guest, session, skTag)
+
+    # TODO: add whatever neccesary int32 id/counter logic and provide nonceData as last param
+    # That int32 (on receive/decode) can be restored via _nonceData()
     @rawEncodeMessage(msg, gpk, sk)
 
   # Decodes a ciphertext from a guest key already in our keyring with this
@@ -297,25 +300,33 @@ class MailBox extends EventEmitter
     Nacl.use().encode_utf8(JSON.stringify(data))
 
   # Makes a timestamp nonce that a relay expects for any crypto operations.
-  # timestamp is the first 8 bytes, the rest is random
+  # timestamp is the first 8 bytes, the rest is random, unless custom 'data'
+  # is specified. 'data' will be packed as next 4 bytes after timestamp
   # Returns a Promise
-  _makeNonce: (time = parseInt(Date.now() / 1000))->
+  _makeNonce: (data = null, time = Date.now())->
     Nacl.use().crypto_box_random_nonce().then (nonce)->
       throw new Error('RNG failed, try again?') unless nonce? and nonce.length is 24
+
       # split timestamp integer as an array of bytes
-      bytes = Utils.itoa(time)
+      headerLen = 8  # max timestamp size
+      aTime = Utils.itoa(parseInt(time/1000))
+
+      if data
+        aData = Utils.itoa(data)
+        headerLen += 4 # extra 4 bytes for custom data
+
+      # zero out nonce header area
+      nonce[i] = 0 for i in [0...headerLen]
+
       # copy the timestamp into the first 8 bytes of nonce
-      nonce[i] = 0 for i in [0..7]
-      nonce[8 - bytes.length + i] = bytes[i] for i in [0..(bytes.length - 1)]
+      nonce[8 - aTime.length + i] = aTime[i] for i in [0..(aTime.length - 1)]
+      # copy data if present
+      nonce[12 - aData.length + i] = aData[i] for i in [0..(aData.length - 1)] if data
       nonce
 
-  # Returns a Promise
-  # Makes a serial counter-based nonce.
-  # Uses 24 byte array to maintain compatibility  with other types of nonce.
-  _makeNonceSerial: ->
-    Utils.incrementByteCounter(@_nonceCounter)
-    @keyRing.storage.save('_nonce_counter', @_nonceCounter.toBase64()).then =>
-      @_nonceCounter.slice(0)
+  _nonceData: (nonce) ->
+    Utils.atoi nonce.subarray(8,12)
+
 
 module.exports = MailBox
 window.MailBox = MailBox if window.__CRYPTO_DEBUG

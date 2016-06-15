@@ -34,6 +34,21 @@ describe 'Utils functions', ->
     b = new Uint8Array([0, 0, 0])
     a.should.deep.equal(b)
 
+describe 'Integers to Arrays and back', ->
+  return unless window.__globalTest.runTests['utils']
+
+  it 'int32 <=> array', ->
+    i = 0x89ABCDEF
+    a = Utils.itoa i
+    a.length.should.equal 4
+    Utils.atoi(a).should.equal i
+
+  it 'int64 <=> array', ->
+    i = 0x0123456789ABCDEF
+    a = Utils.itoa i
+    a.length.should.equal 8
+    Utils.atoi(a).should.equal i
+
 describe 'Base64 functions', ->
   return unless window.__globalTest.runTests['utils']
 
