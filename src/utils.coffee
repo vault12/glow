@@ -58,7 +58,7 @@ class Utils
     # Axios + Promise; https://github.com/mzabriskie/axios
     if axios?
       @setAjaxImpl (url, data)->
-        axios.request
+        axios
           url: url
           method: 'post'
           headers:

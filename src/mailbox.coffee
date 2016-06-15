@@ -299,7 +299,7 @@ class MailBox extends EventEmitter
   # Makes a timestamp nonce that a relay expects for any crypto operations.
   # timestamp is the first 8 bytes, the rest is random
   # Returns a Promise
-  _makeNonceTimestamp: (time = parseInt(Date.now() / 1000))->
+  _makeNonce: (time = parseInt(Date.now() / 1000))->
     Nacl.use().crypto_box_random_nonce().then (nonce)->
       throw new Error('RNG failed, try again?') unless nonce? and nonce.length is 24
       # split timestamp integer as an array of bytes
@@ -312,7 +312,7 @@ class MailBox extends EventEmitter
   # Returns a Promise
   # Makes a serial counter-based nonce.
   # Uses 24 byte array to maintain compatibility  with other types of nonce.
-  _makeNonce: ->
+  _makeNonceSerial: ->
     Utils.incrementByteCounter(@_nonceCounter)
     @keyRing.storage.save('_nonce_counter', @_nonceCounter.toBase64()).then =>
       @_nonceCounter.slice(0)
