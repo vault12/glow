@@ -114,7 +114,7 @@ class MailBox extends EventEmitter
   # Returns a Promise
   rawEncodeMessage: (msg, pkTo, skFrom, nonceData = null)->
     Utils.ensure(msg, pkTo, skFrom)
-    @_makeNonce(nonceData).then (nonce)=>
+    MailBox._makeNonce(nonceData).then (nonce)=>
       @_parseData(msg).then (data)=>
         Nacl.use().crypto_box(data, nonce, pkTo, skFrom).then (ctext)=>
           nonce: nonce.toBase64()
@@ -293,7 +293,7 @@ class MailBox extends EventEmitter
   # timestamp is the first 8 bytes, the rest is random, unless custom 'data'
   # is specified. 'data' will be packed as next 4 bytes after timestamp
   # Returns a Promise
-  _makeNonce: (data = null, time = Date.now())->
+  @_makeNonce: (data = null, time = Date.now())->
     Nacl.use().crypto_box_random_nonce().then (nonce)->
       throw new Error('RNG failed, try again?') unless nonce? and nonce.length is 24
 
@@ -314,8 +314,10 @@ class MailBox extends EventEmitter
       nonce[12 - aData.length + i] = aData[i] for i in [0..(aData.length - 1)] if data
       nonce
 
-  _nonceData: (nonce) ->
-    Utils.atoi nonce.subarray(8,12)
+  # Retrieve nonce user-defined data from a message nonce.
+  # Synchronous
+  @_nonceData: (nonce)->
+    Utils.atoi nonce.subarray(8, 12)
 
 
 module.exports = MailBox

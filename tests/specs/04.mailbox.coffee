@@ -44,14 +44,15 @@ describe 'MailBox, offline Relay', ->
         done()
 
   it 'nonces with data', (done)->
-    data = 0xCDEF89AB
-    handle done, Alice._makeNonce().then (n1)=>
+    # data = 0xCDEF89AB
+    data = 0xFFFFFFFF
+    handle done, MailBox._makeNonce().then (n1)=>
       # random nonce with timestamp only
-      expect(Alice._nonceData n1).is.not.equal data
+      expect(MailBox._nonceData n1).is.not.equal data
 
       # random nonce with extra data, like message counter
-      Alice._makeNonce(data).then (n2)=>
-        expect(Alice._nonceData n2).is.equal data
+      MailBox._makeNonce(data).then (n2)=>
+        expect(MailBox._nonceData n2).is.equal data
         done()
 
   it 'Mailbox from well known seed', (done)->
