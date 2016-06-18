@@ -1,3 +1,8 @@
+### v2.0.3
+* Mailbox hpk precompute
+* Axios
+* Nonce can accept int32 custom data
+
 ### v2.0.2
 
 * Status message support for update calls
