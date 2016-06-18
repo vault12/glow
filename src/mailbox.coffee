@@ -25,40 +25,45 @@ class MailBox extends EventEmitter
   # Otherwise we will make a key for you, and save it in the same CryptoStorage
   # as the rest of of the data.
   # Returns a Promise
-  @new: (identity, strMasterKey = null)->
+  @new: (identity, strMasterKey = null, makeHpk = true)->
     mbx = new MailBox()
     mbx.identity = identity
     mbx.sessionKeys = {}
     mbx.sessionTimeout = {}
     KeyRing.new(mbx.identity, strMasterKey).then (keyRing)->
       mbx.keyRing = keyRing
-      mbx
+      if makeHpk
+        Nacl.h2(mbx.keyRing.commKey.boxPk).then (hpk)=>
+          mbx._hpk = hpk
+          mbx
+      else
+        mbx
 
   # You can create a Mailbox where the secret identity key is derived from a
   # well-known seed.
   # Returns a Promise
   @fromSeed: (seed, id = seed, strMasterKey = null)->
-    @new(id, strMasterKey).then (mbx)=>
+    @new(id, strMasterKey, false).then (mbx)=>
       mbx.keyRing.commFromSeed(seed).then =>
-        mbx._hpk = null
-        mbx
+        Nacl.h2(mbx.keyRing.commKey.boxPk).then (hpk)=>
+          mbx._hpk = hpk
+          mbx
 
   # You can also create a Mailbox if you already know the secret identity key
   # Returns a Promise
   @fromSecKey: (secKey, id, strMasterKey = null)->
-    @new(id, strMasterKey).then (mbx)=>
+    @new(id, strMasterKey, false).then (mbx)=>
       mbx.keyRing.commFromSecKey(secKey).then =>
-        mbx._hpk = null
-        mbx
+        Nacl.h2(mbx.keyRing.commKey.boxPk).then (hpk)=>
+          mbx._hpk = hpk
+          mbx
 
   # --- Mailbox keys ---
   # This is the HPK (hash of the public key) of your mailbox. This is what Zax
   # Relays use as the universal address of your mailbox.
   # Returns a Promise
   hpk: ->
-    return Utils.resolve(@_hpk) if @_hpk
-    Nacl.h2(@keyRing.commKey.boxPk).then (hpk)=>
-      @_hpk = hpk
+    @_hpk.toBase64()
 
   # This is your public identity and default communication key. Your
   # correspondents can know it, whereas Relays do not need it (other than

@@ -28,12 +28,11 @@ describe 'Relay Ops, low level API', ->
     handle done, r.openConnection().then ->
       r.connectMailbox(Alice).then ->
         expect(Alice.sessionKeys).not.empty
-        Bob.hpk().then (hpk)->
-          r.runCmd('upload', Alice,
-            to: hpk.toBase64()
-            payload: 'Hi Bob from Alice 101')
-          .then ->
-            done()
+        r.runCmd('upload', Alice,
+          to: Bob.hpk()
+          payload: 'Hi Bob from Alice 101')
+        .then ->
+          done()
 
   it 'message count in Bob mailbox', (done) ->
     return done() if __globalTest.offline

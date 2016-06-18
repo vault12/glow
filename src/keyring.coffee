@@ -105,7 +105,8 @@ class KeyRing extends EventEmitter
     b64_pk = b64_pk.trimLines()
     # @_addRegistry strGuestTag
     @_addGuestRecord(strGuestTag, b64_pk).then (guest)=>
-      @_saveNewGuest(strGuestTag, guest)
+      @_saveNewGuest(strGuestTag, guest).then =>
+        guest.hpk
 
   # Returns a Promise
   _addGuestRecord: (strGuestTag, b64_pk)->

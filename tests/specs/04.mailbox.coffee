@@ -59,12 +59,11 @@ describe 'MailBox, offline Relay', ->
     handle done, MailBox.fromSeed('hello').then (m)->
       pk = m.keyRing.getPubCommKey()
       pk.should.equal '2DM+z1PaxGXVnzsDh4zv+IlH7sV8llEFoEmg9fG3pRA='
-      m.hpk().then (ret)->
-        ret.should.deep.equal new Uint8Array([255, 29, 75, 250, 114, 23, 77,
-          198, 215, 184, 25, 211, 126, 152, 31, 82, 236, 188, 237, 35, 204, 66,
-          209, 107, 162, 211, 241, 170, 1, 60, 236, 221])
-        m.selfDestruct(true).then ->
-          done()
+      m._hpk.should.deep.equal new Uint8Array([255, 29, 75, 250, 114, 23, 77,
+        198, 215, 184, 25, 211, 126, 152, 31, 82, 236, 188, 237, 35, 204, 66,
+        209, 107, 162, 211, 241, 170, 1, 60, 236, 221])
+      m.selfDestruct(true).then ->
+        done()
 
   it 'encrypt message', (done)->
     handle done, Alice.encodeMessage('Bob_mbx', pt1 = 'Bob, I heard from Наталья

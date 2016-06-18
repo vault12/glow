@@ -103,7 +103,7 @@ class Relay extends EventEmitter
       Nacl.h2(sign).then (h2Sign)=>
         mbx.encodeMessage(relayId, h2Sign).then (inner)=>
           inner['pub_key'] = mbx.keyRing.getPubCommKey()
-          mbx.encodeMessage("relay_#{@url}", inner, true).then (outer)=>
+          mbx.encodeMessage(relayId, inner, true).then (outer)=>
             @_ajax('prove',
               "#{@h2ClientToken}\r\n" +
               "#{maskedClientTempPk}\r\n" +
@@ -124,18 +124,17 @@ class Relay extends EventEmitter
       cmd: cmd
     data = Utils.extend(data, params) if params
     mbx.encodeMessage("relay_#{@url}", data, true).then (message)=>
-      mbx.hpk().then (hpk)=>
-        @_ajax('command',
-          "#{hpk.toBase64()}\r\n" +
-          "#{message.nonce}\r\n" +
-          "#{message.ctext}")
-        .then (d)=>
-          # no data in the response; return msg obj for tests.nonce
-          throw new Error("#{@url} - #{cmd} error") unless d?
-          if cmd in ['count', 'upload', 'download','message_status']
-            @_processResponse(d, mbx, cmd, params)
-          else
-            JSON.parse(d)
+      @_ajax('command',
+        "#{mbx._hpk.toBase64()}\r\n" +
+        "#{message.nonce}\r\n" +
+        "#{message.ctext}")
+      .then (d)=>
+        # no data in the response; return msg obj for tests.nonce
+        throw new Error("#{@url} - #{cmd} error") unless d?
+        if cmd in ['count', 'upload', 'download','message_status']
+          @_processResponse(d, mbx, cmd, params)
+        else
+          JSON.parse(d)
 
   # Returns a decrypt promise or direct response data
   _processResponse: (d, mbx, cmd, params)->

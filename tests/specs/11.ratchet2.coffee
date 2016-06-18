@@ -59,16 +59,15 @@ describe 'Ratchet With Noise', ->
         i = window.__globalTest.idx111++ % max_test
         handle done, Nacl.random(1).then (rnd)->
           j = rnd[0] % max_guest
-          mbx[i].hpk().then (hpk)->
-            hpk_from = hpk.toBase64()
-            mbx[i]._gHpk("guest#{j}").then (gHpk)->
-              hpk_to = gHpk.toBase64()
-              mbx[i].sendToVia("guest#{j}", r, "ratchet #{hpk_from} mbx#{i}=>guest#{j} #{hpk_to}").then ->
-                mbx[i].relayMessages(r).then (download)->
-                  if download.length > 0
-                    for m in download
-                      expect(m.msg).to.contain "ratchet" if m.msg?
-                  done()
+          hpk_from = mbx[i].hpk()
+          mbx[i]._gHpk("guest#{j}").then (gHpk)->
+            hpk_to = gHpk.toBase64()
+            mbx[i].sendToVia("guest#{j}", r, "ratchet #{hpk_from} mbx#{i}=>guest#{j} #{hpk_to}").then ->
+              mbx[i].relayMessages(r).then (download)->
+                if download.length > 0
+                  for m in download
+                    expect(m.msg).to.contain "ratchet" if m.msg?
+                done()
 
   # get last messages back
   window.__globalTest.idx112 = 0
