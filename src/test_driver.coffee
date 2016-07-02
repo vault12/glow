@@ -27,6 +27,13 @@ class SimpleTestDriver
     @_persist()
 
   # Returns a Promise
+  multiSet: (pairs) ->
+    @_load() if not @_state
+    for key, i in pairs by 2
+      localStorage.setItem @_key_tag(key), JSON.stringify pairs[i+1]
+    @_persist()
+
+  # Returns a Promise
   remove: (key) ->
     @_load() if not @_state
     delete @_state[key]

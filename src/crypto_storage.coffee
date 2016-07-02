@@ -74,9 +74,12 @@ class CryptoStorage
       Nacl.use().crypto_secretbox_random_nonce().then (nonce)=>
         Nacl.use().crypto_secretbox(data, nonce, @storageKey.key).then (aCText)=>
           # save the chipher text and nonce for this save op
-          @_set(strTag, aCText.toBase64()).then =>
-            @_set("#{Config._NONCE_TAG}.#{strTag}", nonce.toBase64()).then =>
-              true # signal success
+          # @_set(strTag, aCText.toBase64()).then =>
+          #   @_set("#{Config._NONCE_TAG}.#{strTag}", nonce.toBase64()).then =>
+          #     true # signal success
+          @_multiSet(strTag, aCText.toBase64(),
+            "#{Config._NONCE_TAG}.#{strTag}", nonce.toBase64()).then =>
+            true # signal success
 
   # Returns a Promise
   get: (strTag)->
@@ -109,12 +112,25 @@ class CryptoStorage
       strData
 
   # Returns a Promise
+  _multiSet: (strTag1, strData1, strTag2, strData2)->
+    Utils.ensure(strTag1, strTag2)
+    if @_storage().multiSet
+      @_localMultiSet([ @tag(strTag1), strData1, @tag(strTag2), strData2 ])
+    else
+      @_set(strTag1, strData1).then =>
+        @_set(strTag2, strData2)
+
+  # Returns a Promise
   _localGet: (str)->
     @_storage().get(str)
 
   # Returns a Promise
   _localSet: (str, data)->
     @_storage().set(str, data)
+
+  # Returns a Promise
+  _localMultiSet: (pairs)->
+    @_storage().multiSet(pairs)
 
   # Returns a Promise
   _localRemove: (str)->
