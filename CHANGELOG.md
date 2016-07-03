@@ -1,3 +1,7 @@
+### v2.0.4
+
+* support for optional multiSet
+
 ### v2.0.3
 * Mailbox hpk precompute
 * Axios
