@@ -42,9 +42,9 @@ class KeyRing extends EventEmitter
     delete data[@UNIQ_TAG]
 
     fillGuests = (p, kr) ->
-      pa = (kr.addGuest(name,data[name]) for name,key of data)
-      pa.push p
-      Utils.all(pa)
+      p.then ->
+        pa = (kr.addGuest(name,data[name]) for name,key of data)
+        Utils.all(pa)
 
     KeyRing.new(id).then (kr) ->
       p = kr.commFromSecKey strCommKey.fromBase64()
