@@ -1,3 +1,7 @@
+### v2.0.6
+
+* patching npm error
+
 ### v2.0.5
 
 * support for KeyRing backup / restore
