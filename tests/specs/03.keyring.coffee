@@ -21,7 +21,7 @@ describe 'KeyRing with keys', ->
   it 'create keyring', (done)->
     handle done, KeyRing.new('main_test').then (r)->
       r1 = r
-      KeyRing.new('backup_test').then (r)->
+      KeyRing.new('second_test').then (r)->
         r2 = r
         for r in [r1, r2]
           expect(r.storage).is.not.null
@@ -40,7 +40,7 @@ describe 'KeyRing with keys', ->
   it 'check re-load of system keys', (done)->
     handle done, KeyRing.new('main_test').then (r)->
       rc1 = r
-      KeyRing.new('backup_test').then (r)->
+      KeyRing.new('second_test').then (r)->
         rc2 = r
         kb2 = []
         for r in [rc1, rc2]
@@ -152,6 +152,25 @@ describe 'KeyRing with keys', ->
                   expect(keyA.toString()).equal(keyA_orig.toString())
                   expect(keyB.toString()).equal(keyB_orig.toString())
                   done()
+
+  [original, restored] = [null,null]
+  it 'backup and restore', (done)->
+    handle done, KeyRing.new('missile_control').then (kr1)->
+      original = kr1
+      p = (for i in [0..randNum(5,10)]
+        Nacl.makeKeyPair().then (nkey)->
+          name = randWord randNum 4,14
+          key = nkey.strPubKey()
+          original.addGuest name,key
+      )
+
+      Utils.all(p).then ->
+        backup = original.backup()
+        KeyRing.fromBackup('restored',backup).then (kr2)->
+          restored = kr2
+          expect(original.commKey).deep.equal(restored.commKey)
+          expect(original.guestKeys).deep.equal(restored.guestKeys)
+          done()
 
   it 'emits guest timeout event', (done)->
     st = Config.RELAY_SESSION_TIMEOUT

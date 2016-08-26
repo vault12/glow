@@ -7,6 +7,8 @@ Nacl          = require 'nacl'
 Utils         = require 'utils'
 EventEmitter  = require('events').EventEmitter
 
+ensure = Utils.ensure
+
 # Manages the public keys of correspondents
 class KeyRing extends EventEmitter
 
@@ -27,6 +29,29 @@ class KeyRing extends EventEmitter
         kr.storage = storage
     next.then =>
       kr._ensureKeys().then =>
+        kr
+
+  # Restore keyRing from backup string
+  # Returns a Promise
+  @UNIQ_TAG = "__::commKey::__"
+  @fromBackup: (id, strBackup) ->
+    ensure strBackup
+    data = JSON.parse strBackup
+    strCommKey = data[@UNIQ_TAG]
+    ensure strCommKey
+    delete data[@UNIQ_TAG]
+
+    fillGuests = (p, kr) ->
+      pa = (kr.addGuest(name,data[name]) for name,key of data)
+      pa.push p
+      Utils.all(pa)
+
+    KeyRing.new(id).then (kr) ->
+      p = kr.commFromSecKey strCommKey.fromBase64()
+      [p, kr]
+    .then (d) ->
+      [p, kr] = d
+      fillGuests(p,kr).then ->
         kr
 
   # make sure we have all basic keys created
@@ -95,13 +120,8 @@ class KeyRing extends EventEmitter
     @storage.remove(tag)
 
   # Returns a Promise
-  _saveNewGuest: (tag, pk)->
-    Utils.ensure(tag and pk)
-    @storage.save('guest_registry', @guestKeys)
-
-  # Returns a Promise
   addGuest: (strGuestTag, b64_pk)->
-    Utils.ensure(strGuestTag and b64_pk)
+    ensure(strGuestTag,b64_pk)
     b64_pk = b64_pk.trimLines()
     # @_addRegistry strGuestTag
     @_addGuestRecord(strGuestTag, b64_pk).then (guest)=>
@@ -110,26 +130,33 @@ class KeyRing extends EventEmitter
 
   # Returns a Promise
   _addGuestRecord: (strGuestTag, b64_pk)->
-    Utils.ensure(strGuestTag, b64_pk)
+    ensure(strGuestTag, b64_pk)
     Nacl.h2(b64_pk.fromBase64()).then (h2)=>
       @guestKeys[strGuestTag] =
         pk: b64_pk
         hpk: h2.toBase64()
+        temp: false
+
+  # Returns a Promise
+  _saveNewGuest: (tag, pk)->
+    ensure(tag, pk)
+    @storage.save('guest_registry', @guestKeys)
 
   timeToGuestExpiration: (strGuestTag)->
-    Utils.ensure(strGuestTag)
+    ensure strGuestTag
     entry = @guestKeyTimeouts[strGuestTag]
     return 0 if not entry
     Math.max(Config.RELAY_SESSION_TIMEOUT - (Date.now() - entry.startTime), 0)
 
   # Synchronous
   addTempGuest: (strGuestTag, strPubKey)->
-    Utils.ensure(strGuestTag, strPubKey)
+    ensure(strGuestTag, strPubKey)
     strPubKey = strPubKey.trimLines()
     Nacl.h2(strPubKey.fromBase64()).then (h2)=>
       @guestKeys[strGuestTag] =
         pk: strPubKey
         hpk: h2.toBase64()
+        temp: true
       if @guestKeyTimeouts[strGuestTag]
         clearTimeout @guestKeyTimeouts[strGuestTag].timeoutId
       @guestKeyTimeouts[strGuestTag] =
@@ -141,28 +168,37 @@ class KeyRing extends EventEmitter
 
   # Returns a Promise
   removeGuest: (strGuestTag)->
-    Utils.ensure(strGuestTag)
+    ensure(strGuestTag)
     return Utils.resolve() unless @guestKeys[strGuestTag]
     delete @guestKeys[strGuestTag]
     @storage.save('guest_registry', @guestKeys)
 
   # Synchronous
   getGuestKey: (strGuestTag)->
-    Utils.ensure(strGuestTag)
+    ensure strGuestTag
     return null unless @guestKeys[strGuestTag]
     new Keys
       boxPk: @getGuestRecord(strGuestTag).fromBase64()
 
   # Synchronous
   getGuestRecord: (strGuestTag)->
-    Utils.ensure(strGuestTag)
+    ensure strGuestTag
     return null unless @guestKeys[strGuestTag]
     @guestKeys[strGuestTag].pk
+
+  backup: ->
+    res = {}
+    if @getNumberOfGuests() > 0
+      for k,v of @guestKeys
+        unless v.temp
+          res[k]=v.pk
+    res[KeyRing.UNIQ_TAG] = @commKey.strSecKey()
+    JSON.stringify res
 
   # have to call with overseerAuthorized as true for extra safety
   # Returns a Promise
   selfDestruct: (overseerAuthorized)->
-    Utils.ensure(overseerAuthorized)
+    ensure overseerAuthorized
     @storage.remove('guest_registry').then =>
       @storage.remove('comm_key').then =>
         @storage.selfDestruct(overseerAuthorized)

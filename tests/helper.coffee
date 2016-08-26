@@ -64,6 +64,28 @@ window.__globalTest.naclWorker = true
 if window.__globalTest.naclWorker
   Nacl.setNaclImpl(new JsNaclWebWorkerDriver())
 
+# Syntactic sugar.
+# Append a `.catch (done)` to the outer-most Promise-returning statement
+# in a test, to correctly feed the thrown Error back to Mocha.
+# Usage: prepend to first promise statement in a test.
+window.handle = (done, promise)-> promise.catch (done)
+
+# Test helpers
+window.randNum = (min,max) ->
+  parseInt(min + Math.random()*(max-min))
+
+window.randWord = (len) ->
+  consonants = 'bcdfghjklmnpqrstvwxyz'.split('')
+  vowels = 'aeiou'.split('')
+  word = ""
+  for i in [0..len/2]
+    rConsonant = consonants.sample()
+    rVowel = vowels.sample()
+    rConsonant = rConsonant.toUpperCase() unless i>0
+    word += rConsonant
+    word += if i*2 < len-1 then rVowel else ''
+  word
+
 # control which tests to run
 window.__globalTest.runTests =
   'utils':                true
@@ -80,12 +102,6 @@ window.__globalTest.runTests =
   'relay ratchet':        true
   'relay noise ratchet':  true
   'relay race':           true # todo: false
-
-# Syntactic sugar.
-# Append a `.catch (done)` to the outer-most Promise-returning statement
-# in a test, to correctly feed the thrown Error back to Mocha.
-# Usage: prepend to first promise statement in a test.
-window.handle = (done, promise)-> promise.catch (done)
 
 # In tests you can directly access window.Utils, window.Mailbox, etc.
 # from the console

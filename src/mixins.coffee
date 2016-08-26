@@ -54,6 +54,10 @@ for C in [Array , Uint8Array , Uint16Array]
         return false if v isnt a2[i]
       return true
 
+    sample: ->
+      return null unless @length > 0
+      @[Math.floor(Math.random()*@length)]
+
 Utils.include Uint8Array,
   # creates a new Uint8Array that is the concat of self & anotherArray
   concat: (anotherArray) ->

@@ -217,7 +217,7 @@ class Utils
 
   # Ensure every argument is truish
   @ENSURE_ERROR_MSG = 'invalid arguments'
-  @ensure: ()->
+  @ensure: ()=>
     for a in arguments
       throw new Error(@ENSURE_ERROR_MSG) unless a
 
