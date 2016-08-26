@@ -1,3 +1,7 @@
+### v2.0.5
+
+* support for KeyRing backup / restore
+
 ### v2.0.4
 
 * support for optional multiSet
