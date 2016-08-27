@@ -25,19 +25,14 @@ class MailBox extends EventEmitter
   # Otherwise we will make a key for you, and save it in the same CryptoStorage
   # as the rest of of the data.
   # Returns a Promise
-  @new: (identity, strMasterKey = null, makeHpk = true)->
+  @new: (identity, strMasterKey = null)->
     mbx = new MailBox()
     mbx.identity = identity
     mbx.sessionKeys = {}
     mbx.sessionTimeout = {}
     KeyRing.new(mbx.identity, strMasterKey).then (keyRing)->
       mbx.keyRing = keyRing
-      if makeHpk
-        Nacl.h2(mbx.keyRing.commKey.boxPk).then (hpk)=>
-          mbx._hpk = hpk
-          mbx
-      else
-        mbx
+      mbx
 
   # You can create a Mailbox where the secret identity key is derived from a
   # well-known seed.
@@ -45,25 +40,29 @@ class MailBox extends EventEmitter
   @fromSeed: (seed, id = seed, strMasterKey = null)->
     @new(id, strMasterKey, false).then (mbx)=>
       mbx.keyRing.commFromSeed(seed).then =>
-        Nacl.h2(mbx.keyRing.commKey.boxPk).then (hpk)=>
-          mbx._hpk = hpk
-          mbx
+        mbx
 
   # You can also create a Mailbox if you already know the secret identity key
   # Returns a Promise
   @fromSecKey: (secKey, id, strMasterKey = null)->
     @new(id, strMasterKey, false).then (mbx)=>
       mbx.keyRing.commFromSecKey(secKey).then =>
-        Nacl.h2(mbx.keyRing.commKey.boxPk).then (hpk)=>
-          mbx._hpk = hpk
-          mbx
+        mbx
+
+  # You can also create a Mailbox from backup string
+  # Returns a Promise
+  @fromBackup: (strBackup, id, strMasterKey = null)->
+    @new(id, strMasterKey, false).then (mbx) ->
+      KeyRing.fromBackup(id,strBackup).then (kr)->
+        mbx.keyRing=kr
+        mbx
+
 
   # --- Mailbox keys ---
   # This is the HPK (hash of the public key) of your mailbox. This is what Zax
   # Relays use as the universal address of your mailbox.
-  # Returns a Promise
   hpk: ->
-    @_hpk.toBase64()
+    @keyRing.hpk.toBase64()
 
   # This is your public identity and default communication key. Your
   # correspondents can know it, whereas Relays do not need it (other than

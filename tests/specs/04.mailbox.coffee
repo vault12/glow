@@ -59,11 +59,26 @@ describe 'MailBox, offline Relay', ->
     handle done, MailBox.fromSeed('hello').then (m)->
       pk = m.keyRing.getPubCommKey()
       pk.should.equal '2DM+z1PaxGXVnzsDh4zv+IlH7sV8llEFoEmg9fG3pRA='
-      m._hpk.should.deep.equal new Uint8Array([255, 29, 75, 250, 114, 23, 77,
+      m.keyRing.hpk.should.deep.equal new Uint8Array([255, 29, 75, 250, 114, 23, 77,
         198, 215, 184, 25, 211, 126, 152, 31, 82, 236, 188, 237, 35, 204, 66,
         209, 107, 162, 211, 241, 170, 1, 60, 236, 221])
       m.selfDestruct(true).then ->
         done()
+
+  H2_KEY = 'vye4sj8BKHopBVXUfv3s3iKyP6TyNoJnHUYWCMcjwTo='
+  H2_HPK = new Uint8Array([9, 78, 219, 218, 145, 88, 23, 117, 122, 235, 219, 132, 206, 98, 130, 28, 221, 116, 161, 97, 67, 177, 45, 242, 44, 19, 9, 75, 194, 238, 22, 223])
+  it 'Mailbox backup & restore', (done)->
+    handle done, MailBox.fromSeed('hello2').then (m)->
+      pk = m.keyRing.getPubCommKey()
+      pk.should.equal H2_KEY
+      m.keyRing.hpk.should.deep.equal H2_HPK
+      backup = m.keyRing.backup()
+      m.selfDestruct(true).then ->
+        MailBox.fromBackup(backup,"backup test").then (m2)->
+          pk = m2.keyRing.getPubCommKey()
+          pk.should.equal H2_KEY
+          m2.keyRing.hpk.should.deep.equal H2_HPK
+          done()
 
   it 'encrypt message', (done)->
     handle done, Alice.encodeMessage('Bob_mbx', pt1 = 'Bob, I heard from Наталья

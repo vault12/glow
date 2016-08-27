@@ -10,6 +10,12 @@ Nacl    = require 'nacl'
 Config  = require 'config'
 Utils   = require 'utils'
 
+kRing_ok = (r) ->
+  expect(r.commKey).is.not.null
+  expect(r.hpk).is.not.null
+  expect(r.storage).is.not.null
+  expect(r.guestKeys).is.not.null
+
 # ----- Keyring with guest keys -----
 describe 'KeyRing with keys', ->
   return unless window.__globalTest.runTests['keyring']
@@ -24,30 +30,35 @@ describe 'KeyRing with keys', ->
       KeyRing.new('second_test').then (r)->
         r2 = r
         for r in [r1, r2]
-          expect(r.storage).is.not.null
-          expect(r.commKey).is.not.null
-          expect(r.guestKeys).is.not.null
+          kRing_ok r
         done()
 
   key_buffer = []
+  h_buffer = []
   it 'check system keys', ->
     for r in [r1, r2]
       for k in [r.getMasterKey(), r.getPubCommKey()]
         k.should.be.a('string')
         key_buffer.push k
+        h_buffer.push r.hpk
         expect(k.fromBase64().length).equal(32) # 32 byte buffer
 
   it 'check re-load of system keys', (done)->
     handle done, KeyRing.new('main_test').then (r)->
       rc1 = r
+      kRing_ok rc1
       KeyRing.new('second_test').then (r)->
         rc2 = r
         kb2 = []
+        hb2 = []
+        kRing_ok rc2
         for r in [rc1, rc2]
           for k in [r.getMasterKey(), r.getPubCommKey()]
             kb2.push k
+            hb2.push r.hpk
         # rings with the same name load the same keys
         expect(kb2).deep.equal(key_buffer)
+        expect(hb2).deep.equal(h_buffer)
         done()
 
   a = null
@@ -101,13 +112,16 @@ describe 'KeyRing with keys', ->
   it 'create from secret key', (done)->
     handle done, KeyRing.new('missile_command_1').then (k)->
       spectre = k
+      kRing_ok spectre
       write_on_napkin = spectre.commKey.strSecKey()
 
       # smuggle the napkin
       KeyRing.new('james_bond_briefcase').then (k)->
         jb = k
         jb.commFromSecKey(write_on_napkin.fromBase64()).then ->
+          kRing_ok jb
           expect(spectre.commKey).deep.equal jb.commKey
+          expect(spectre.hpk).deep.equal jb.hpk
           done()
 
   it 'guest persistence', (done)->
@@ -170,6 +184,7 @@ describe 'KeyRing with keys', ->
           restored = kr2
           expect(original.commKey).deep.equal(restored.commKey)
           expect(original.guestKeys).deep.equal(restored.guestKeys)
+          expect(original.hpk).deep.equal(restored.hpk)
           done()
 
   it 'emits guest timeout event', (done)->

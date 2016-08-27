@@ -49,8 +49,8 @@ class KeyRing extends EventEmitter
     KeyRing.new(id).then (kr) ->
       p = kr.commFromSecKey strCommKey.fromBase64()
       [p, kr]
-    .then (d) ->
-      [p, kr] = d
+    .then (args) ->
+      [p, kr] = args
       fillGuests(p,kr).then ->
         kr
 
@@ -62,12 +62,20 @@ class KeyRing extends EventEmitter
 
   # Returns a Promise
   _loadCommKey: ->
-    @getKey('comm_key').then (commKey)=>
+    @getKey('comm_key').then (commKey) =>
       @commKey = commKey
       return if @commKey
-      Nacl.makeKeyPair().then (commKey)=>
-        @commKey = commKey
-        @saveKey('comm_key', @commKey)
+        Nacl.h2(@commKey.boxPk).then (hpk) =>
+          @hpk = hpk
+          @commKey
+      else
+        Nacl.makeKeyPair().then (commKey) =>
+          @commKey = commKey
+          Nacl.h2(@commKey.boxPk).then (hpk) =>
+            @hpk = hpk
+          .then =>
+            @saveKey('comm_key', @commKey)
+            @commKey
 
   getNumberOfGuests: ->
     Object.keys(@guestKeys or {}).length
@@ -80,16 +88,24 @@ class KeyRing extends EventEmitter
 
   # Returns a Promise
   commFromSeed: (seed)->
-    Nacl.encode_utf8(seed).then (encoded)=>
-      Nacl.fromSeed(encoded).then (commKey)=>
+    Nacl.encode_utf8(seed).then (encoded) =>
+      Nacl.fromSeed(encoded).then (commKey) =>
         @commKey = commKey
-        @storage.save('comm_key', @commKey.toString())
+        Nacl.h2(@commKey.boxPk).then (hpk) =>
+          @hpk = hpk
+        .then =>
+          @storage.save('comm_key', @commKey.toString())
+          @commKey
 
   # Returns a Promise
   commFromSecKey: (rawSecKey)->
-    Nacl.fromSecretKey(rawSecKey).then (commKey)=>
+    Nacl.fromSecretKey(rawSecKey).then (commKey) =>
       @commKey = commKey
-      @storage.save('comm_key', @commKey.toString())
+      Nacl.h2(@commKey.boxPk).then (hpk) =>
+        @hpk = hpk
+      .then =>
+        @storage.save('comm_key', @commKey.toString())
+        @commKey
 
   # Synchronous
   tagByHpk: (hpk)->

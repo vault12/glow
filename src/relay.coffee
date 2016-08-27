@@ -125,7 +125,7 @@ class Relay extends EventEmitter
     data = Utils.extend(data, params) if params
     mbx.encodeMessage("relay_#{@url}", data, true).then (message)=>
       @_ajax('command',
-        "#{mbx._hpk.toBase64()}\r\n" +
+        "#{mbx.hpk()}\r\n" +
         "#{message.nonce}\r\n" +
         "#{message.ctext}")
       .then (d)=>
