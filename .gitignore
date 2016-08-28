@@ -1,8 +1,8 @@
 node_modules/
 dist/tests.js
+dist/theglow.min.js
 dist/theglow.js
 dist/*.map
 debug/
 npm-debug.log
 Icon
-

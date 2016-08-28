@@ -1,3 +1,7 @@
+### v2.0.7
+
+* MailBox backup / restore
+
 ### v2.0.6
 
 * patching npm error
