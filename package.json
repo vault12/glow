@@ -41,7 +41,8 @@
     "source-map-support": "^0.3.3",
     "subarg": "^1.0.0",
     "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0"
+    "vinyl-source-stream": "^1.1.0",
+    "zepto": "^1.2.0"
   },
   "dependencies": {
     "js-nacl": "^0.6.0"
