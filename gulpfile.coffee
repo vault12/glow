@@ -1,16 +1,19 @@
 
 browserify  = require 'browserify'
 browserSync = require('browser-sync').create() # live css reload & browser syncing
-coffee      = require 'gulp-coffee'   # removing this will add 10 secs to the build
-coffeeify   = require 'coffeeify'
+coffeeify   = require 'coffeeify'     # browserify plugin for coffescript support
+                                      # breaks with latest coffeescript version, so forced legacy CS version in package.json
+                                      # TODO: follow https://github.com/jnordberg/coffeeify/issues/41 for solution
 gulp        = require 'gulp'          # streaming build system
 subarg      = require 'subarg'        # allows us to parse arguments w/recursive contexts
 uglify      = require 'gulp-uglify'   # minifies files with UglifyJS
 rimraf      = require 'gulp-rimraf'   # delete files
 es          = require 'event-stream'  # merge multiple streams under one control object
 source      = require 'vinyl-source-stream'
+transform   = require 'vinyl-transform'
 buffer      = require 'vinyl-buffer'
 sourcemaps  = require 'gulp-sourcemaps'
+exorcist    = require 'exorcist'
 glob        = require 'glob'
 browserify_coffeelint = require 'browserify-coffeelint'
 global.argv = subarg(process.argv.slice(2)) # used for tunnel
@@ -19,7 +22,7 @@ conf =
   lib: ['src/main.coffee', 'theglow.js']
   tests: [['src/main.coffee'].concat(glob.sync('tests/**/*.coffee')), 'tests.js']
   watch: ['src/**/*.coffee', 'src/**/*.js', 'tests/**/*.coffee']
-  dist_dir: 'dist'
+  dist_dir: 'dist/'
   clean: ['dist/*.js', 'dist/*.map']
 
 # produce non-minified versions of theglow and tests + source maps
@@ -52,10 +55,10 @@ build = (minify)->
     target = target.replace('.js', '.min.js') if minify
     b = b.bundle()
     b = b.pipe source target
-    b = b.pipe(buffer())
-    b = b.pipe(sourcemaps.init({loadMaps: true})) if !minify
-    b = b.pipe(uglify()) if minify
-    b = b.pipe(sourcemaps.write('./')) if !minify
+    b = b.pipe buffer()
+    b = b.pipe transform(->
+      exorcist conf.dist_dir + target + '.map', null, '../') if !minify
+    b = b.pipe uglify() if minify
     b = b.pipe gulp.dest conf.dist_dir
 
 # launch browser sync
