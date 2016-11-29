@@ -8,15 +8,14 @@ gulp        = require 'gulp'          # streaming build system
 subarg      = require 'subarg'        # allows us to parse arguments w/recursive contexts
 uglify      = require 'gulp-uglify'   # minifies files with UglifyJS
 rimraf      = require 'gulp-rimraf'   # delete files
-coffee      = require 'gulp-coffee'   # delete files
+coffee      = require 'gulp-coffee'
 es          = require 'event-stream'  # merge multiple streams under one control object
 source      = require 'vinyl-source-stream'
 transform   = require 'vinyl-transform'
 buffer      = require 'vinyl-buffer'
-sourcemaps  = require 'gulp-sourcemaps'
 exorcist    = require 'exorcist'
 glob        = require 'glob'
-browserify_coffeelint = require 'browserify-coffeelint'
+coffeelint  = require 'browserify-coffeelint'
 global.argv = subarg(process.argv.slice(2)) # used for tunnel
 
 conf =
@@ -49,7 +48,7 @@ build = (minify)->
       extensions: ['.coffee']
       paths: ['src'])
     b.exclude 'js-nacl'
-    b.transform browserify_coffeelint,
+    b.transform coffeelint,
       doEmitErrors: false
       doEmitWarnings: false
     b.transform coffeeify
