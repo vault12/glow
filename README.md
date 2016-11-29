@@ -15,7 +15,7 @@ npm install theglow
 
 ## Running the tests
 By default, the unit tests connect to known [Zax](https://github.com/vault12/zax) Cryptographic Relay Servers.
-You may change this by modifying the code in [tests/helper.coffee#L39](tests/helper.coffee#L39)
+You may change this by modifying the code in [tests/helper.coffee#L57](tests/helper.coffee#L57)
 
 ```CoffeeScript
 host: 'https://zax_test.vault12.com'
