@@ -5,4 +5,8 @@ dist/theglow.js
 dist/*.map
 debug/
 npm-debug.log
-Icon
+.DS_Store
+Icon
+
+# Visual Studio Code
+.vscode/chrome

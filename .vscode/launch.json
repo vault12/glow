@@ -1,0 +1,35 @@
+{
+  // Install recommended VS Code extensions to use Chrome/Firefox/iOS debuggers
+  // Check https://go.microsoft.com/fwlink/?linkid=830387 for docs on launch.json and debugging
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "request": "launch",
+      "type": "chrome",
+      "name": "Debug in Chrome",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceRoot}",
+      "userDataDir": "${workspaceRoot}/.vscode/chrome", // create separate Chrome user data directory for debugging
+      "sourceMaps": true
+    },
+    {
+      "request": "launch",
+      "type": "firefox",
+      "name": "Debug in Firefox",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceRoot}"
+    }
+    // iOS 10 not supported at the moment. Follow https://github.com/Microsoft/vscode-chrome-debug/issues/227
+    /*{
+      "request": "attach",
+      "type": "ios",
+      "name": "Debug on iOS",
+      "url": "http://192.168.0.100:3000", // IP address of the current device, for debugging on mobile
+      "port": 9222,
+      "deviceName": "*",
+      "diagnosticLogging": true,
+      "webRoot": "${workspaceRoot}",
+      "sourceMaps": true
+    },*/
+  ]
+}
