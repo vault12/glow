@@ -66,7 +66,7 @@ gulp.task 'default', ['build'], ->
   browserSync.init
     server:
       baseDir: '.'
-      index: 'dist/index.html'
+      index: 'index.html'
     notify: false
     tunnel: argv.tunnel
     online: true
