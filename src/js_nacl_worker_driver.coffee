@@ -6,7 +6,7 @@ Utils = require 'utils'
 class JsNaclWebWorkerDriver
 
   constructor: (
-    worker_path = '/src/js_nacl_worker.js',
+    worker_path = '/dist/js_nacl_worker.js',
     js_nacl_path = '/node_modules/js-nacl/lib/nacl_factory.js',
     heap_size = 2 ** 23)->
 

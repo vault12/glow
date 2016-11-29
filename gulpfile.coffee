@@ -8,6 +8,7 @@ gulp        = require 'gulp'          # streaming build system
 subarg      = require 'subarg'        # allows us to parse arguments w/recursive contexts
 uglify      = require 'gulp-uglify'   # minifies files with UglifyJS
 rimraf      = require 'gulp-rimraf'   # delete files
+coffee      = require 'gulp-coffee'   # delete files
 es          = require 'event-stream'  # merge multiple streams under one control object
 source      = require 'vinyl-source-stream'
 transform   = require 'vinyl-transform'
@@ -22,15 +23,16 @@ conf =
   lib: ['src/main.coffee', 'theglow.js']
   tests: [['src/main.coffee'].concat(glob.sync('tests/**/*.coffee')), 'tests.js']
   watch: ['src/**/*.coffee', 'src/**/*.js', 'tests/**/*.coffee']
+  workers: 'src/workers/*.coffee'
   dist_dir: 'dist/'
   clean: ['dist/*.js', 'dist/*.map']
 
 # produce non-minified versions of theglow and tests + source maps
-gulp.task 'build', ->
+gulp.task 'build', ['workers'], ->
   build false
 
 # produce minified version of theglow
-gulp.task 'dist', ->
+gulp.task 'dist', ['workers'], ->
   build true
 
 build = (minify)->
@@ -60,6 +62,11 @@ build = (minify)->
       exorcist conf.dist_dir + target + '.map', null, '../', './') if !minify
     b = b.pipe uglify() if minify
     b = b.pipe gulp.dest conf.dist_dir
+
+gulp.task 'workers', ->
+  gulp.src conf.workers
+    .pipe coffee()
+    .pipe gulp.dest conf.dist_dir
 
 # launch browser sync
 gulp.task 'default', ['build'], ->
