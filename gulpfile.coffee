@@ -57,7 +57,7 @@ build = (minify)->
     b = b.pipe source target
     b = b.pipe buffer()
     b = b.pipe transform(->
-      exorcist conf.dist_dir + target + '.map', null, '../') if !minify
+      exorcist conf.dist_dir + target + '.map', null, '../', './') if !minify
     b = b.pipe uglify() if minify
     b = b.pipe gulp.dest conf.dist_dir
 
