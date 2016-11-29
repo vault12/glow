@@ -1,0 +1,5 @@
+// optimal VS Code settings for Glow project (overwrites default and user settings)
+{
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false
+}
