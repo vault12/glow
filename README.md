@@ -1,11 +1,11 @@
 # Glow [![Build Status](https://travis-ci.org/vault12/glow.svg)](https://travis-ci.org/vault12/glow)
-Glow is a reference client library for interacting with [Zax](https://github.com/vault12/zax), a [NaCl-based Cryptographic Relay](https://s3-us-west-1.amazonaws.com/vault12/zax_infogfx.jpg). You can read the full [technical specification here](http://bit.ly/nacl_relay_spec). This reference implementation is in CoffeeScript. We will add links to other implementations in different languages as they become available.
+Glow is a reference client library for interacting with [Zax](https://github.com/vault12/zax), a [NaCl-based Cryptographic Relay](https://s3-us-west-1.amazonaws.com/vault12/zax_infogfx.jpg). You can read the full [technical specification here](http://bit.ly/nacl_relay_spec). This reference implementation is in [CoffeeScript](http://coffeescript.org). We will add links to other implementations in different languages as they become available.
 
 ## Test Dashboard
- Glow powers a test [Dashboard](https://github.com/vault12/zax-dash) app to provide user-friend access point to given relay internal mailboxes. We maintain live [Test Server](https://zax_test.vault12.com) that runs our latest build. For testing purposes expiration on that relay is set for 30 minutes.
+ Glow powers a test [Dashboard](https://github.com/vault12/zax-dash) app to provide user-friendly access point to given relay internal mailboxes. We maintain live [Test Server](https://zax_test.vault12.com) that runs our latest build. For testing purposes expiration on that relay is set for 30 minutes.
 
 ## Getting Started
-Glow can be easily installed via npm, which is included when you install [Node.js](https://nodejs.org/)
+Glow can be easily installed via `npm`, which is included when you install [Node.js](https://nodejs.org/)
 
 ##### Installation
 In a terminal, navigate to the directory in which you'd like to install Glow and type the following:
@@ -22,7 +22,7 @@ host: 'https://zax_test.vault12.com'
 ```
 
 ##### Source maps and tests
-By default, the build generates source maps and places them in the './dist' directory. To create a build and run the tests, navigate to the glow directory and type the following in a terminal:
+By default, the build generates source maps and places them in the `dist` directory. To create a build and run the tests, navigate to the glow directory and type the following in a terminal:
 
 ```Shell
 node_modules/gulp/bin/gulp.js
@@ -57,7 +57,7 @@ Run the build via the command line:
 node_modules/gulp/bin/gulp.js
 ```
 
-This will create the appropriate minified files in the following directory: './dist'
+This will create the appropriate minified files in the following directory: `dist`
 
 ## Demo
 To see Glow and Zax in action, check out the [Live Demo](https://zax_test.vault12.com). This is a test project included in Zax called [Zax-Dash](https://github.com/vault12/zax-dash).
@@ -68,7 +68,7 @@ We encourage you to contribute to Glow using [pull requests](https://github.com/
 ## Slack Community [![Slack Status](https://slack.vault12.com/badge.svg)](https://slack.vault12.com)
 We've set up a public slack community [Vault12 Dwellers](https://vault12dwellers.slack.com/). Request an invite by clicking [here](https://slack.vault12.com/).
 
-## License
+## License [![License](https://img.shields.io/github/license/vault12/glow.svg)]
 Glow is released under the [MIT License](http://opensource.org/licenses/MIT).
 
 ## Legal Reminder
