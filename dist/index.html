@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" media="all" href="node_modules/mocha/mocha.css">
+  <meta charset="utf-8">
   <title>The Glow ✨</title>
-  <!-- override a few mocha rules to make success/failures really stand out.-->
-  <style type="text/css">
+  <link rel="stylesheet" media="all" href="node_modules/mocha/mocha.css">
+  <!-- override a few mocha rules to make success/failures really stand out -->
+  <style>
     #mocha li.passes, #mocha li.failures { font-size: 24px; }
-    #mocha li.passes em { color: lightgreen; }
+    #mocha li.passes em { color: green; }
     #mocha li.failures em { color: red; }
   </style>
 
   <!-- A+ Promised Http Requests; comment out to use Zepto -->
-  <script type="text/javascript" src="node_modules/axios/dist/axios.js"></script>
+  <script src="node_modules/axios/dist/axios.js"></script>
 
   <!-- Zepto can be used for Ajax (in absence of axios) and OPTIONAL $.extend + $.map -->
-  <!-- <script type="text/javascript" src="node_modules/zepto/dist/zepto.min.js"></script> -->
+  <!-- <script src="node_modules/zepto/dist/zepto.min.js"></script> -->
 
-  <script type="text/javascript" src="node_modules/js-nacl/lib/nacl_factory.js"></script>
-  <script type="text/javascript" src="node_modules/source-map-support/browser-source-map-support.js"></script>
-  <script type="text/javascript">
-    sourceMapSupport.install({handleUncaughtExceptions: false})
+  <script src="node_modules/js-nacl/lib/nacl_factory.js"></script>
+  <script src="node_modules/source-map-support/browser-source-map-support.js"></script>
+  <script>
+    sourceMapSupport.install({handleUncaughtExceptions: false});
   </script>
 
   <!-- We use Mocha (https://mochajs.org/) to run our unit tests -->
-  <script type="text/javascript" src="node_modules/mocha/mocha.js"></script>
-  <script type="text/javascript">
-    mocha.setup('bdd')
+  <script src="node_modules/mocha/mocha.js"></script>
+  <script>
+    mocha.setup('bdd');
     // Kick off the unit tests for theglow library
     if (window.mochaPhantomJS)
       mochaPhantomJS.run();
@@ -34,11 +35,11 @@
   </script>
 
   <!-- this contains our compiled tests -->
-  <script type="text/javascript" src='dist/tests.js'></script>
+  <script src="dist/tests.js"></script>
 </head>
 <body>
-<div id="mocha">
-<h1>The Glow ✨ : client crypto</h1>
-</div>
+  <div id="mocha">
+    <h1>The Glow ✨ : client crypto</h1>
+  </div>
 </body>
 </html>
