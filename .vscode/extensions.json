@@ -1,0 +1,9 @@
+// recommended VS Code extensions
+{
+  "recommendations": [
+    "slb235.vscode-coffeelint",
+    "msjsdiag.debugger-for-chrome",
+    "hbenl.vscode-firefox-debug",
+    "msjsdiag.debugger-for-ios-web"
+  ]
+}
