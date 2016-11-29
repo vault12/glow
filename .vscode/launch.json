@@ -17,6 +17,7 @@
       "type": "firefox",
       "name": "Debug in Firefox",
       "url": "http://localhost:3000",
+      "profile": "default", // use default Firefox user profile. Otherwise browser may throw HTTPS certificate error
       "webRoot": "${workspaceRoot}"
     }
     // iOS 10 not supported at the moment. Follow https://github.com/Microsoft/vscode-chrome-debug/issues/227
