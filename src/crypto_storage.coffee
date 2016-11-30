@@ -78,7 +78,8 @@ class CryptoStorage
           #   @_set("#{Config._NONCE_TAG}.#{strTag}", nonce.toBase64()).then =>
           #     true # signal success
           @_multiSet(strTag, aCText.toBase64(),
-            "#{Config._NONCE_TAG}.#{strTag}", nonce.toBase64()).then =>
+            "#{Config._NONCE_TAG}.#{strTag}", nonce.toBase64()
+          ).then =>
             true # signal success
 
   # Returns a Promise
@@ -89,7 +90,8 @@ class CryptoStorage
         return null unless nonce # nothing to do without nonce
         # covert cipher text to arrays from base64 in local storage
         Nacl.use().crypto_secretbox_open(ct.fromBase64(), nonce.fromBase64(),
-          @storageKey.key).then (aPText)=>
+          @storageKey.key)
+        .then (aPText)=>
           # restore JSON string from plain text array and parse it
           Nacl.use().decode_utf8(aPText).then (data)=>
             JSON.parse(data)

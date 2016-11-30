@@ -64,7 +64,8 @@ describe 'Relay Ops, low level API', ->
           expect(result).equal 1
           # now delete for real
           r.runCmd('delete', Bob,
-            payload: [__globalTest.bob_nonce]).then (result)->
+            payload: [__globalTest.bob_nonce]
+          ).then (result)->
             expect(result).equal 0
             done()
 
