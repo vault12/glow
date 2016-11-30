@@ -75,12 +75,20 @@ gulp.task 'workers', ->
 
 # launch browser sync
 gulp.task 'default', ['build'], ->
+  server true
+
+# launch browser sync silently (for debugging)
+gulp.task 'silent', ['build'], ->
+  server false
+
+server = (openBrowser) ->
   browserSync.init
     server:
       baseDir: '.'
       index: 'index.html'
     notify: false
     tunnel: argv.tunnel
+    open: openBrowser
     online: true
     minify: false
   gulp.watch conf.watch, ['watch']
