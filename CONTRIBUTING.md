@@ -3,6 +3,10 @@
 ## Security Issues
 **Please do not report security vulnerabilities with public GitHub issue reports.** Instead, send an email to security@vault12.com
 
+## Development Environment
+
+Check out our recommendations for effective development on a corresponding [wiki page](https://github.com/vault12/glow/wiki/Development-environment).
+
 ## Pull Requests
 Before you open a ticket or send a pull request, [search](https://github.com/vault12/glow/issues) for previous discussions about the same feature or issue. Add to the earlier ticket if you find one. GitHub has excellent documentation on how to [use pull requests](https://help.github.com/articles/using-pull-requests/)
 
