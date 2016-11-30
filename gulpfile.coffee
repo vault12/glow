@@ -21,11 +21,10 @@ global.argv = subarg(process.argv.slice(2)) # used for tunnel
 conf =
   lib: ['src/main.coffee', 'theglow.js']
   tests: [['src/main.coffee'].concat(glob.sync('tests/**/*.coffee')), 'tests.js']
-  watch: ['src/**/*.coffee', 'src/**/*.js', 'tests/**/*.coffee']
+  watch: ['src/**/*.coffee', 'tests/**/*.coffee']
   workers: 'src/workers/*.coffee'
   dist_dir: 'dist/'
   build_dir: 'build/'
-  clean: ['dist/*.js', 'dist/*.map']
 
 # produce non-minified versions of theglow and tests + source maps
 gulp.task 'build', ['workers'], ->
