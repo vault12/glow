@@ -30,12 +30,10 @@ class RatchetBox extends Mailbox
       # if we have confirmed ratchet key we use it, otherwise
       # fallback to our @commKey
       KeyRatchet.new("local_#{gHpk}_for_#{@hpk().toBase64()}",
-        @keyRing, @keyRing.commKey
-      ).then (krLocal)=>
+        @keyRing, @keyRing.commKey).then (krLocal)=>
         @krLocal = krLocal
         KeyRatchet.new("guest_#{gHpk}_for_#{@hpk().toBase64()}",
-          @keyRing, @keyRing.getGuestKey guest
-        ).then (krGuest)=>
+          @keyRing, @keyRing.getGuestKey guest).then (krGuest)=>
           @krGuest = krGuest
 
   # Returns a Promise
