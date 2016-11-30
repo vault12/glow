@@ -1,8 +1,5 @@
 node_modules/
-dist/tests.js
-dist/theglow.min.js
-dist/theglow.js
-dist/*.map
+build/
 debug/
 npm-debug.log
 .DS_Store
