@@ -24,6 +24,7 @@ conf =
   watch: ['src/**/*.coffee', 'src/**/*.js', 'tests/**/*.coffee']
   workers: 'src/workers/*.coffee'
   dist_dir: 'dist/'
+  build_dir: 'build/'
   clean: ['dist/*.js', 'dist/*.map']
 
 # produce non-minified versions of theglow and tests + source maps
@@ -58,14 +59,14 @@ build = (minify)->
     b = b.pipe source target
     b = b.pipe buffer()
     b = b.pipe transform(->
-      exorcist conf.dist_dir + target + '.map', null, '../', './') if !minify
+      exorcist conf.build_dir + target + '.map', null, '../', './') if !minify
     b = b.pipe uglify() if minify
-    b = b.pipe gulp.dest conf.dist_dir
+    b = b.pipe gulp.dest conf.build_dir
 
 gulp.task 'workers', ->
   gulp.src conf.workers
     .pipe coffee()
-    .pipe gulp.dest conf.dist_dir
+    .pipe gulp.dest conf.build_dir
 
 # launch browser sync
 gulp.task 'default', ['build'], ->
@@ -88,5 +89,5 @@ gulp.task 'test', ['build'], ->
   # TODO node version -or- PhantomJS v2 test
 
 gulp.task 'clean', ->
-  gulp.src conf.clean, read: false
+  gulp.src conf.build_dir, read: false
     .pipe rimraf()
