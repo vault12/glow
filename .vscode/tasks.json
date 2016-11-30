@@ -1,0 +1,15 @@
+{
+  "version": "0.1.0",
+  "command": "gulp",
+  "showOutput": "silent",
+  "promptOnClose": false,
+  "tasks": [
+    {
+      "taskName": "silent",
+      "args": [
+        "silent"
+      ],
+      "isBuildCommand": true
+    }
+  ]
+}
