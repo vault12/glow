@@ -4,14 +4,13 @@ Glow is a reference client library for interacting with [Zax](https://github.com
 ## Test Dashboard
  Glow powers a test [Dashboard](https://github.com/vault12/zax-dash) app to provide user-friendly access point to given relay internal mailboxes. We maintain live [Test Server](https://zax_test.vault12.com) that runs our latest build. For testing purposes expiration on that relay is set for 30 minutes.
 
-## Getting Started
-Glow can be easily installed via `npm`, which is included when you install [Node.js](https://nodejs.org/)
-
-##### Installation
+## Installation
+Glow can be easily installed via `npm`, which is included when you install [Node.js](https://nodejs.org/).
 In a terminal, navigate to the directory in which you'd like to install Glow and type the following:
 ```Shell
 npm install theglow
 ```
+The built version of Glow will be available in `dist` subdirectory, along with the minified copy.
 
 ## Running the tests
 By default, the unit tests connect to known [Zax](https://github.com/vault12/zax) Cryptographic Relay Servers.
@@ -22,7 +21,7 @@ host: 'https://zax_test.vault12.com'
 ```
 
 ##### Source maps and tests
-By default, the build generates source maps and places them in the `dist` directory. To create a build and run the tests, navigate to the glow directory and type the following in a terminal:
+By default, the build generates source maps and places them in the `build` directory. To create a build and run the tests, navigate to the glow directory and type the following in a terminal:
 
 ```Shell
 node_modules/gulp/bin/gulp.js
@@ -37,9 +36,7 @@ gulp
 If you are new to using source maps to debug, here's an overview:
 
 Chrome: [Source Maps on Chrome](https://developer.chrome.com/devtools/docs/javascript-debugging#source-maps)
-
 Safari: [Source Maps on Safari](https://developer.apple.com/library/mac/documentation/AppleApplications/Conceptual/Safari_Developer_Guide/ResourcesandtheDOM/ResourcesandtheDOM.html)
-
 Firefox: [Source Maps on Firefox](https://developer.mozilla.org/en-US/docs/Tools/Debugger/How_to/Use_a_source_map)
 
 ##### Running the tests at the command line
@@ -51,13 +48,13 @@ node_modules/gulp/bin/gulp.js test
 
 ## Release Builds
 
-Run the build via the command line:
+Generate production-ready build via the command line:
 
 ```Shell
-node_modules/gulp/bin/gulp.js
+node_modules/gulp/bin/gulp.js dist
 ```
 
-This will create the appropriate minified files in the following directory: `dist`
+This will create the appropriate files in the following directory: `dist`
 
 ## Demo
 To see Glow and Zax in action, check out the [Live Demo](https://zax_test.vault12.com). This is a test project included in Zax called [Zax-Dash](https://github.com/vault12/zax-dash).
