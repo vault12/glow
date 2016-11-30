@@ -8,6 +8,7 @@ gulp        = require 'gulp'          # streaming build system
 subarg      = require 'subarg'        # allows us to parse arguments w/recursive contexts
 uglify      = require 'gulp-uglify'   # minifies files with UglifyJS
 rimraf      = require 'gulp-rimraf'   # delete files
+rename      = require 'gulp-rename'   # delete files
 coffee      = require 'gulp-coffee'
 es          = require 'event-stream'  # merge multiple streams under one control object
 source      = require 'vinyl-source-stream'
@@ -30,13 +31,14 @@ conf =
 gulp.task 'build', ['workers'], ->
   build false
 
-# produce minified version of theglow
-gulp.task 'dist', ['workers'], ->
+# produce production-ready minified and non-minified versions of theglow
+gulp.task 'dist', ->
   build true
 
-build = (minify)->
+build = (dist) ->
+  dir = if dist then conf.dist_dir else conf.build_dir
   items = [conf.lib]
-  items.push conf.tests if !minify
+  items.push conf.tests if !dist
   # We merge the streams (that we create using `Array.map`)
   # using `es.merge` into a single stream object which is
   # necessary to return from the gulp task so that Gulp
@@ -44,7 +46,7 @@ build = (minify)->
   es.merge.apply null, items.map (entry) ->
     b = browserify(
       entries: entry[0]
-      debug: true
+      debug: true if !dist
       extensions: ['.coffee']
       paths: ['src'])
     b.exclude 'js-nacl'
@@ -52,16 +54,20 @@ build = (minify)->
       doEmitErrors: false
       doEmitWarnings: false
     b.transform coffeeify
-    target = entry[1]
-    target = target.replace('.js', '.min.js') if minify
     b = b.bundle()
-    b = b.pipe source target
+    b = b.pipe source entry[1]
     b = b.pipe buffer()
-    b = b.pipe transform(->
-      exorcist conf.build_dir + target + '.map', null, '../', './') if !minify
-    b = b.pipe uglify() if minify
-    b = b.pipe gulp.dest conf.build_dir
 
+    # comment out this to turn off source maps
+    b = b.pipe transform(->
+      exorcist dir + entry[1] + '.map', null, '../', './') if !dist
+    
+    b = b.pipe gulp.dest dir
+    b = b.pipe rename entry[1].replace('.js', '.min.js') if dist
+    b = b.pipe uglify() if dist
+    b = b.pipe gulp.dest dir
+
+# build web workers
 gulp.task 'workers', ->
   gulp.src conf.workers
     .pipe coffee()
@@ -87,6 +93,7 @@ gulp.task 'watch', ['build'], ->
 gulp.task 'test', ['build'], ->
   # TODO node version -or- PhantomJS v2 test
 
+# clear build directory
 gulp.task 'clean', ->
   gulp.src conf.build_dir, read: false
     .pipe rimraf()
