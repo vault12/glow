@@ -36,7 +36,9 @@ gulp
 If you are new to using source maps to debug, here's an overview:
 
 Chrome: [Source Maps on Chrome](https://developer.chrome.com/devtools/docs/javascript-debugging#source-maps)
+
 Safari: [Source Maps on Safari](https://developer.apple.com/library/mac/documentation/AppleApplications/Conceptual/Safari_Developer_Guide/ResourcesandtheDOM/ResourcesandtheDOM.html)
+
 Firefox: [Source Maps on Firefox](https://developer.mozilla.org/en-US/docs/Tools/Debugger/How_to/Use_a_source_map)
 
 ##### Running the tests at the command line
@@ -65,7 +67,7 @@ We encourage you to contribute to Glow using [pull requests](https://github.com/
 ## Slack Community [![Slack Status](https://slack.vault12.com/badge.svg)](https://slack.vault12.com)
 We've set up a public slack community [Vault12 Dwellers](https://vault12dwellers.slack.com/). Request an invite by clicking [here](https://slack.vault12.com/).
 
-## License [![License](https://img.shields.io/github/license/vault12/glow.svg)]
+## License [![License](https://img.shields.io/github/license/vault12/glow.svg)](http://opensource.org/licenses/MIT)
 Glow is released under the [MIT License](http://opensource.org/licenses/MIT).
 
 ## Legal Reminder
