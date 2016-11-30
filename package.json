@@ -18,7 +18,7 @@
     "relay"
   ],
   "directories": {},
-  "main": "lib/theglow.js",
+  "main": "dist/theglow.js",
   "license": "MIT",
   "devDependencies": {
     "axios": "^0.12.0",
