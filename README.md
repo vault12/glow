@@ -19,19 +19,18 @@ You may change this by modifying the code in [tests/helper.coffee#L57](tests/hel
 ```CoffeeScript
 host: 'https://zax_test.vault12.com'
 ```
-
-##### Source maps and tests
-By default, the build generates source maps and places them in the `build` directory. To create a build and run the tests, navigate to the glow directory and type the following in a terminal:
+To create a build and run the tests, navigate to the glow directory and type the following in a terminal:
 
 ```Shell
 node_modules/gulp/bin/gulp.js
 ```
 
-Note that if you have [Gulp](https://github.com/gulpjs/gulp) installed globally, you can also simply type:
+Note that if you have [Gulp](https://github.com/gulpjs/gulp) installed globally, you can also simply type `gulp`.
 
-```Shell
-gulp
-```
+Note that only one instance of tests can be run at the same time, since test keys are derived from the same seeds. Running multiple instances simultaneously may cause unpredicted behavior.
+
+##### Source maps
+By default, the build generates source maps and places them in the `build` directory. 
 
 If you are new to using source maps to debug, here's an overview:
 
