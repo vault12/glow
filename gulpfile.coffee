@@ -17,7 +17,8 @@ buffer      = require 'vinyl-buffer'
 exorcist    = require 'exorcist'      # moves inline source maps to external .js.map file
 glob        = require 'glob'
 coffeelint  = require 'browserify-coffeelint'
-global.argv = subarg(process.argv.slice(2)) # used for tunnel
+phantom     = require 'gulp-mocha-phantomjs' # headless browser for running tests from CLI
+global.argv = subarg(process.argv.slice(2))  # used for tunnel
 
 conf =
   lib: ['src/main.coffee', 'theglow.js']
@@ -98,8 +99,12 @@ gulp.task 'watch', ['build'], ->
   browserSync.reload()
 
 # run single-run headless tests
-gulp.task 'test', ['build'], ->
-  # TODO node version -or- PhantomJS v2 test
+gulp.task 'test', ->
+  gulp.src 'index.html', read: false
+    .pipe phantom
+      reporter: 'spec'
+      phantomjs:
+        useColors: true
 
 # clear build directory
 gulp.task 'clean', ->
