@@ -99,7 +99,7 @@ gulp.task 'watch', ['build'], ->
   browserSync.reload()
 
 # run single-run headless tests
-gulp.task 'test', ->
+gulp.task 'test', ['build'], ->
   gulp.src 'index.html', read: false
     .pipe phantom
       reporter: 'spec'
