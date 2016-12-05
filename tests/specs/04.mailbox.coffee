@@ -55,6 +55,11 @@ describe 'MailBox, offline Relay', ->
         expect(MailBox._nonceData n2).is.equal data
         done()
 
+  # first call of Mailbox.fromSeed returns an object with wrong keys in PhantomJS environment,
+  # so this line is needed to "warm-up" NACL and generate correct keyRings for tests.
+  # TODO: get rid of this
+  MailBox.fromSeed('warmup')
+
   it 'Mailbox from well known seed', (done)->
     handle done, MailBox.fromSeed('hello').then (m)->
       pk = m.keyRing.getPubCommKey()
