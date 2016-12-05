@@ -40,7 +40,7 @@
     "gulp-rimraf": "^0.2.0",
     "gulp-uglify": "^1.5.1",
     "mocha": "^2.3.4",
-    "promise": "^7.1.1",
+    "promise-polyfill": "^6.0.2",
     "source-map-support": "^0.3.3",
     "subarg": "^1.0.0",
     "vinyl-buffer": "^1.0.0",
