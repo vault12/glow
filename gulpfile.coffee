@@ -100,7 +100,7 @@ gulp.task 'watch', ['build'], ->
 
 # run tests in headless browser
 gulp.task 'test', ['build'], ->
-  spawn('./node_modules/mocha-phantomjs-core/phantomjs', [
+  phantom = spawn('./node_modules/mocha-phantomjs-core/phantomjs', [
     # allow headless browser to connect via HTTPS
     '--ignore-ssl-errors=yes'
     '--web-security=no'
@@ -110,6 +110,9 @@ gulp.task 'test', ['build'], ->
     'spec'
     '{"useColors": true}'
   ], stdio: 'inherit')
+
+  phantom.on 'close', (code) ->
+    console.log 'child process exited with code ' + code
 
 # clear build directory
 gulp.task 'clean', ->
