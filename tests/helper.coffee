@@ -27,7 +27,7 @@ if localStorage
 
   # prevent problems on test reruns after failed tests
   k = (localStorage.key(i) for i in [0...localStorage.length])
-  Utils.map k, (x) -> localStorage.removeItem x if x? and x.includes drv._root_tag
+  Utils.map k, (x) -> localStorage.removeItem x if x? and (x.indexOf drv._root_tag > 1)
 
   # Start crypto storage stystem with simple localStorage driver
   CryptoStorage.startStorageSystem drv
@@ -78,7 +78,7 @@ window.randWord = (len) ->
   consonants = 'bcdfghjklmnpqrstvwxyz'.split('')
   vowels = 'aeiou'.split('')
   word = ""
-  for i in [0..len/2]
+  for i in [0..(len / 2)]
     rConsonant = consonants.sample()
     rVowel = vowels.sample()
     rConsonant = rConsonant.toUpperCase() unless i>0
