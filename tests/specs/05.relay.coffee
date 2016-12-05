@@ -26,7 +26,7 @@ describe 'Relay Session', ->
 
         r = new Relay(__globalTest.host)
         tm = Config.RELAY_TOKEN_TIMEOUT
-        Config.RELAY_TOKEN_TIMEOUT = 1
+        Config.RELAY_TOKEN_TIMEOUT = 2
 
         r.getServerToken().then ->
 
