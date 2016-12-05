@@ -103,15 +103,6 @@ window.__globalTest.runTests =
   'relay noise ratchet':  true
   'relay race':           true # todo: false
 
-# run only offline tests in PhantomJS
-# TODO: run AJAX tests in CLI as well
-if (window.navigator.userAgent.indexOf 'PhantomJS') > -1
-  window.__globalTest.runTests =
-    'utils':                true
-    'nacl':                 true
-    'crypto':               true
-    'keyring':              true
-
 # In tests you can directly access window.Utils, window.Mailbox, etc.
 # from the console
 window.__CRYPTO_DEBUG = true

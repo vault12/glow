@@ -17,7 +17,7 @@ buffer      = require 'vinyl-buffer'
 exorcist    = require 'exorcist'      # moves inline source maps to external .js.map file
 glob        = require 'glob'
 coffeelint  = require 'browserify-coffeelint'
-phantom     = require 'gulp-mocha-phantomjs' # headless browser for running tests from CLI
+spawn       = require('child_process').spawn # needed to run CLI tests as a shell command
 global.argv = subarg(process.argv.slice(2))  # used for tunnel
 
 conf =
@@ -98,13 +98,18 @@ server = (openBrowser) ->
 gulp.task 'watch', ['build'], ->
   browserSync.reload()
 
-# run single-run headless tests
+# run tests in headless browser
 gulp.task 'test', ['build'], ->
-  gulp.src 'index.html', read: false
-    .pipe phantom
-      reporter: 'spec'
-      phantomjs:
-        useColors: true
+  spawn('node_modules/mocha-phantomjs-core/phantomjs', [
+    # allow headless browser to connect via HTTPS
+    '--ignore-ssl-errors=yes'
+    '--web-security=no'
+    'node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js'
+    'index.html'
+    # Mocha reporter
+    'spec'
+    '{"useColors": true}'
+  ], stdio: 'inherit')
 
 # clear build directory
 gulp.task 'clean', ->
