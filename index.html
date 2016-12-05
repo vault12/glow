@@ -32,11 +32,7 @@
   <script src="node_modules/mocha/mocha.js"></script>
   <script>
     mocha.setup('bdd');
-    // Kick off the unit tests for theglow library
-    if (window.mochaPhantomJS)
-      mochaPhantomJS.run();
-    else
-      window.onload = function() { mocha.run() }
+    window.onload = function() { mocha.run(); }
   </script>
 
   <!-- this contains our compiled tests -->
