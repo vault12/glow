@@ -27,7 +27,7 @@ if localStorage
 
   # prevent problems on test reruns after failed tests
   k = (localStorage.key(i) for i in [0...localStorage.length])
-  Utils.map k, (x) -> localStorage.removeItem x if x? and (x.indexOf drv._root_tag > 1)
+  Utils.map k, (x) -> localStorage.removeItem x if x? and (x.indexOf drv._root_tag > -1)
 
   # Start crypto storage stystem with simple localStorage driver
   CryptoStorage.startStorageSystem drv
