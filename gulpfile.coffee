@@ -112,7 +112,7 @@ gulp.task 'test', ['build'], ->
   ], stdio: 'inherit')
 
   phantom.on 'close', (code) ->
-    console.log 'child process exited with code ' + code
+    process.exit code
 
 # clear build directory
 gulp.task 'clean', ->
