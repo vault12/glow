@@ -3,7 +3,8 @@
 
 # Low level basic utilities and mixins
 # zepto = require 'zepto' # minimalist js library. similar syntax to jQuery
-Config  = require 'config'
+Config = require 'config'
+
 class Utils
 
   # --- Mixins ---
