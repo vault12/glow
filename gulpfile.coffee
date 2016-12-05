@@ -47,7 +47,7 @@ build = (dist) ->
   es.merge.apply null, items.map (entry) ->
     b = browserify(
       entries: entry[0]
-      debug: true if !dist
+      debug: true
       extensions: ['.coffee']
       paths: ['src'])
     b.exclude 'js-nacl'
@@ -61,7 +61,7 @@ build = (dist) ->
 
     # comment out this to turn off source maps
     b = b.pipe transform(->
-      exorcist dir + entry[1] + '.map', null, '../', './') if !dist
+      exorcist dir + entry[1] + '.map', null, '../', './')
     
     b = b.pipe gulp.dest dir
     b = b.pipe rename entry[1].replace('.js', '.min.js') if dist
