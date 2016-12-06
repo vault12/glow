@@ -66,7 +66,7 @@ describe 'Relay Session', ->
 
   it 'emits token timeout event', (done)->
     rt = Config.RELAY_TOKEN_TIMEOUT
-    Config.RELAY_TOKEN_TIMEOUT = 1
+    Config.RELAY_TOKEN_TIMEOUT = 10
     r = new Relay(__globalTest.host)
     r.on 'relaytokentimeout', ->
       Config.RELAY_TOKEN_TIMEOUT = rt
