@@ -1,11 +1,14 @@
 language: node_js
+
 node_js: 6.9.1
 os: osx
 
 cache:
   directories:
-  - node_modules
+    - node_modules
+
 script: node_modules/gulp/bin/gulp.js test
+
 notifications:
   slack:
     secure: NxX8yzMSCNptkk5+xxGiIR2VmQoiNFWAwzS5deHp+mSpbUyIoRiHPi7lPRPWatySmp0kqxzc1KKmln3qS2iUQQsLtqFIRUkRDMeYab9iLL98V4Htc+H2RbqFOv+f3HgOCuwCXO+cYdPvwnY4zVZHxq5XTWZE2Zui9kxvajhPCt7KIlfKYI39gEnWRwup6JANL2KLsh5JAkvWkzFAmWa7EmTcqIwY65tw+FKFEVqaTf+lEK9LzeIZJmaYePvXZyGheobaa7i8MwoHXm2QnqwAOSRgB5+BtvxkkK/NwDm4BHoWUXzINqLu0glUr8+ZwUqmp/j4aQfbySgvu82RDWZDzdex4tKyVb7mR0babKFxq+1wrqu8EJjQl0qMabPbqg1i/3tbjzdf4I3aEacqH8bPOIuJrpAHP5gygR4PyhZmyDYgJRGXfnrPrb/Z75sGpIUhAymnH2OWT1BzTYJorUbmppBAZjHsmsetGxS8vKoQtfAPttETWw92359cG2ThP/26LhnrRjbEJbdcdAcoVRR8MGRf/FIhbVNdDaGo5bQr5sct17rc5Pb+A5yLNeviORfejh850EEfvy2R032u2oFmm8RuV7k7ptUYNuzy26OuhsVU6D+22/knbHdBOrKtBta5PA0r2QZ6kzMRnYyV9pwGRBy59B/A8yoZXJZKSaCXGkQ=

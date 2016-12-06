@@ -36,30 +36,33 @@ if localStorage
 # host points to known Zax server(s). To set up your own Zax server, see the
 # instructions at https://github.com/vault12/zax#installation
 
-# select a preset (local vs remote) or edit your own settings
-localTest = false
+# Allow for global overriding
+if not window.__globalTest
 
-if localTest
-  # local testing
-  window.__globalTest =
-    host: 'http://localhost:8080'
-    offline: false
-    timeouts:
-      tiny: 500
-      mid: 1000
-      long: 5000
-else
-  # internet testing
-  window.__globalTest =
-    host: 'https://zax_test.vault12.com'
-    offline: false
-    timeouts:
-      tiny: 50000
-      mid: 130000
-      long: 500000
+  # select a preset (local vs remote) or edit your own settings
+  localTest = false
 
-# Test with the web worker js-nacl driver?
-window.__globalTest.naclWorker = true
+  if localTest
+    # local testing
+    window.__globalTest =
+      host: 'http://localhost:8080'
+      offline: false
+      timeouts:
+        tiny: 500
+        mid: 1000
+        long: 5000
+  else
+    # internet testing
+    window.__globalTest =
+      host: 'https://zax_test.vault12.com'
+      offline: false
+      timeouts:
+        tiny: 50000
+        mid: 130000
+        long: 500000
+
+  # Test with the web worker js-nacl driver?
+  window.__globalTest.naclWorker = true
 
 if window.__globalTest.naclWorker
   Nacl.setNaclImpl(new JsNaclWebWorkerDriver())
@@ -87,21 +90,22 @@ window.randWord = (len) ->
   word
 
 # control which tests to run
-window.__globalTest.runTests =
-  'utils':                true
-  'nacl':                 true
-  'crypto':               true
-  'keyring':              true
-  'mailbox':              true
-  'relay session':        true
-  'relay low level':      true
-  'relay wrapper':        true
-  'relay bulk':           true
-  'relay invites':        true
-  'relay stress':         true
-  'relay ratchet':        true
-  'relay noise ratchet':  true
-  'relay race':           true # todo: false
+if not window.__globalTest.runTests
+  window.__globalTest.runTests =
+    'utils':                true
+    'nacl':                 true
+    'crypto':               true
+    'keyring':              true
+    'mailbox':              true
+    'relay session':        true
+    'relay low level':      true
+    'relay wrapper':        true
+    'relay bulk':           true
+    'relay invites':        true
+    'relay stress':         true
+    'relay ratchet':        true
+    'relay noise ratchet':  true
+    'relay race':           true # todo: false
 
 # In tests you can directly access window.Utils, window.Mailbox, etc.
 # from the console
