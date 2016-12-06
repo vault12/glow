@@ -100,7 +100,7 @@ gulp.task 'watch', ['build'], ->
 
 # run tests in headless browser
 gulp.task 'test', ['build'], ->
-  spawn('node_modules/mocha-phantomjs-core/phantomjs', [
+  spawn('./node_modules/mocha-phantomjs-core/phantomjs', [
     # allow headless browser to connect via HTTPS
     '--ignore-ssl-errors=yes'
     '--web-security=no'
