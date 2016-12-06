@@ -1,3 +1,8 @@
+### v3.0.2
+
+* Run tests in CLI and Travis CI
+* Sourcemap support
+
 ### v2.0.7
 
 * MailBox backup / restore
