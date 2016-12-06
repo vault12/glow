@@ -586,10 +586,10 @@ JsNaclWebWorkerDriver = (function() {
   function JsNaclWebWorkerDriver(worker_path, js_nacl_path, heap_size) {
     var api, hasCrypto, onmessage2, queues, random_reqs, worker;
     if (worker_path == null) {
-      worker_path = '/build/js_nacl_worker.js';
+      worker_path = './build/js_nacl_worker.js';
     }
     if (js_nacl_path == null) {
-      js_nacl_path = '/node_modules/js-nacl/lib/nacl_factory.js';
+      js_nacl_path = '../node_modules/js-nacl/lib/nacl_factory.js';
     }
     if (heap_size == null) {
       heap_size = Math.pow(2, 23);
@@ -2766,4 +2766,5 @@ if (window.__CRYPTO_DEBUG) {
 }
 
 
-},{"config":2}]},{},[10]);
+},{"config":2}]},{},[10])
+//# sourceMappingURL=theglow.js.map
