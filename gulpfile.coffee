@@ -2,8 +2,6 @@
 browserify  = require 'browserify'
 browserSync = require('browser-sync').create() # live css reload & browser syncing
 coffeeify   = require 'coffeeify'     # browserify plugin for coffescript support
-                                      # breaks with latest coffeescript version, so forced legacy CS version in package.json
-                                      # TODO: follow https://github.com/jnordberg/coffeeify/issues/41 for solution
 gulp        = require 'gulp'          # streaming build system
 subarg      = require 'subarg'        # allows us to parse arguments w/recursive contexts
 uglify      = require 'gulp-uglify'   # minifies files with UglifyJS
