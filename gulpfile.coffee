@@ -55,6 +55,9 @@ build = (dist) ->
     b.transform coffeeify
     b = b.bundle()
     b = b.pipe source entry[1]
+    .on 'error', ->
+      # report CoffeeScript errors in console and continue build 
+      this.emit 'end'
     b = b.pipe buffer()
 
     # comment out this to turn off source maps
