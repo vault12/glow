@@ -73,6 +73,7 @@ gulp.task 'workers', ->
   gulp.src conf.workers
     .pipe coffee()
     .pipe gulp.dest conf.build_dir
+    .pipe gulp.dest conf.dist_dir
 
 # launch browser sync
 gulp.task 'default', ['build'], ->

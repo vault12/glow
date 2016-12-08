@@ -19,6 +19,12 @@
   ],
   "directories": {},
   "main": "dist/theglow.js",
+  "files": [
+    "dist/theglow.js",
+    "dist/theglow.js.map",
+    "dist/theglow.min.js",
+    "dist/js_nacl_worker.js"
+  ],
   "license": "MIT",
   "devDependencies": {
     "axios": "^0.12.0",
