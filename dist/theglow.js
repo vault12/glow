@@ -532,7 +532,7 @@ JsNaclDriver = (function() {
     require('nacl').API.forEach((function(_this) {
       return function(f) {
         return _this[f] = function() {
-          var e, error, inst;
+          var e, inst;
           inst = _this.use();
           try {
             return Utils.resolve(inst[f].apply(inst, arguments));
@@ -1690,10 +1690,11 @@ Utils = require('utils');
 
 Utils.include(String, {
   toCodeArray: function() {
-    var j, len, results, s;
+    var j, len, ref, results, s;
+    ref = this;
     results = [];
-    for (j = 0, len = this.length; j < len; j++) {
-      s = this[j];
+    for (j = 0, len = ref.length; j < len; j++) {
+      s = ref[j];
       results.push(s.charCodeAt());
     }
     return results;
@@ -1725,10 +1726,11 @@ for (j = 0, len = ref.length; j < len; j++) {
     fromCharCodes: function() {
       var c;
       return ((function() {
-        var k, len1, results;
+        var k, len1, ref1, results;
+        ref1 = this;
         results = [];
-        for (k = 0, len1 = this.length; k < len1; k++) {
-          c = this[k];
+        for (k = 0, len1 = ref1.length; k < len1; k++) {
+          c = ref1[k];
           results.push(String.fromCharCode(c));
         }
         return results;
@@ -1743,22 +1745,24 @@ for (j = 0, len = ref.length; j < len; j++) {
         return null;
       }
       return new Uint8Array((function() {
-        var k, len1, results;
+        var k, len1, ref1, results;
+        ref1 = this;
         results = [];
-        for (i = k = 0, len1 = this.length; k < len1; i = ++k) {
-          c = this[i];
+        for (i = k = 0, len1 = ref1.length; k < len1; i = ++k) {
+          c = ref1[i];
           results.push(c ^ a[i]);
         }
         return results;
       }).call(this));
     },
     equal: function(a2) {
-      var i, k, len1, v;
+      var i, k, len1, ref1, v;
       if (this.length !== a2.length) {
         return false;
       }
-      for (i = k = 0, len1 = this.length; k < len1; i = ++k) {
-        v = this[i];
+      ref1 = this;
+      for (i = k = 0, len1 = ref1.length; k < len1; i = ++k) {
+        v = ref1[i];
         if (v !== a2[i]) {
           return false;
         }
@@ -1783,9 +1787,10 @@ Utils.include(Uint8Array, {
     return tmp;
   },
   fillWith: function(val) {
-    var i, k, len1, v;
-    for (i = k = 0, len1 = this.length; k < len1; i = ++k) {
-      v = this[i];
+    var i, k, len1, ref1, v;
+    ref1 = this;
+    for (i = k = 0, len1 = ref1.length; k < len1; i = ++k) {
+      v = ref1[i];
       this[i] = val;
     }
     return this;
@@ -1973,7 +1978,7 @@ RatchetBox = (function(superClass) {
   };
 
   RatchetBox.prototype._tryKeypair = function(nonce, ctext, pk, sk) {
-    var e, error;
+    var e;
     try {
       return this.rawDecodeMessage(nonce.fromBase64(), ctext.fromBase64(), pk, sk);
     } catch (error) {

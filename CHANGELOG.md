@@ -1,3 +1,8 @@
+### v3.0.3
+
+* Added web worker to dist
+* Published only build files on NPM
+
 ### v3.0.2
 
 * Run tests in CLI and Travis CI
