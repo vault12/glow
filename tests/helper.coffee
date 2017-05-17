@@ -41,7 +41,6 @@ if not window.__globalTest
 
   # select a preset (local vs remote) or edit your own settings
   localTest = false
-
   if localTest
     # local testing
     window.__globalTest =
@@ -54,7 +53,7 @@ if not window.__globalTest
   else
     # internet testing
     window.__globalTest =
-      host: 'https://zax_test.vault12.com'
+      host: 'https://z.vault12.com'
       offline: false
       timeouts:
         tiny: 50000
