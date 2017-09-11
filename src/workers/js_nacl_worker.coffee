@@ -21,28 +21,31 @@ else
 
 api = init: (e) ->
   importScripts e.data.naclPath
-  js_nacl = nacl_factory.instantiate(e.data.heapSize)
-  e.data.api.forEach (f) ->
-
-    api[f] = (e) ->
-      try
-        if self.rnd_queue and e.data.rnd
-          self.rnd_queue.push e.data.rnd
-        self.postMessage
-          cmd: f
-          res: js_nacl[f].apply(js_nacl, e.data.args)
-      catch e
-        self.postMessage
-          cmd: f
-          error: true
-          message: e.stack or e.message or e
-      return
-
-    return
-  self.postMessage
-    cmd: 'init'
-    hasCrypto: hasCrypto
+  nacl_factory.instantiate( (new_nacl) =>
+    js_nacl = new_nacl
+    # Not sure - do we need simular line in web_worker? Its present in js_nacl_driver
+    # @.crypto_secretbox_KEYBYTES = @_instance.crypto_secretbox_KEYBYTES
+    e.data.api.forEach (f) ->
+      api[f] = (e) ->
+        try
+          if self.rnd_queue and e.data.rnd
+            self.rnd_queue.push e.data.rnd
+          self.postMessage
+            cmd: f
+            res: js_nacl[f].apply(js_nacl, e.data.args)
+        catch e
+          self.postMessage
+            cmd: f
+            error: true
+            message: e.stack or e.message or e
+    self.postMessage
+      cmd: 'init'
+      hasCrypto: hasCrypto
+  ,
+    requested_total_memory: e.data.heapSize
+  )
   return
+
 
 self.addEventListener 'message', (e) ->
   func = api[e.data.cmd]

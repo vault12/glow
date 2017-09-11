@@ -324,6 +324,10 @@ Config = (function() {
 
   Config.RELAY_AJAX_TIMEOUT = 5 * 1000;
 
+  Config.RELAY_RETRY_REQUEST_ATTEMPTS = 15;
+
+  Config.RELAY_BLOCKING_TIME = 60 * 60 * 1000;
+
   return Config;
 
 })();
@@ -521,47 +525,46 @@ JsNaclDriver = (function() {
 
   JsNaclDriver.prototype._unloadTimer = null;
 
-  function JsNaclDriver(js_nacl, HEAP_SIZE, UNLOAD_TIMEOUT) {
+  function JsNaclDriver(js_nacl, HEAP_SIZE) {
     if (js_nacl == null) {
       js_nacl = null;
     }
-    this.HEAP_SIZE = HEAP_SIZE != null ? HEAP_SIZE : Math.pow(2, 23);
-    this.UNLOAD_TIMEOUT = UNLOAD_TIMEOUT != null ? UNLOAD_TIMEOUT : 15 * 1000;
+    this.HEAP_SIZE = HEAP_SIZE != null ? HEAP_SIZE : Math.pow(2, 26);
     this.js_nacl = js_nacl || (typeof nacl_factory !== "undefined" && nacl_factory !== null ? nacl_factory : void 0) || require('js-nacl');
-    this.crypto_secretbox_KEYBYTES = this.use().crypto_secretbox_KEYBYTES;
-    require('nacl').API.forEach((function(_this) {
-      return function(f) {
-        return _this[f] = function() {
-          var e, inst;
-          inst = _this.use();
-          try {
-            return Utils.resolve(inst[f].apply(inst, arguments));
-          } catch (error) {
-            e = error;
-            return Utils.reject(e);
-          }
-        };
-      };
-    })(this));
+    this.load();
   }
 
   JsNaclDriver.prototype.use = function() {
-    if (this._unloadTimer) {
-      clearTimeout(this._unloadTimer);
-    }
-    this._unloadTimer = setTimeout(((function(_this) {
-      return function() {
-        return _this.unload();
-      };
-    })(this)), this.UNLOAD_TIMEOUT);
     if (!this._instance) {
-      this._instance = this.js_nacl.instantiate(this.HEAP_SIZE);
+      throw new Error('js-nacl is not loaded');
     }
     return this._instance;
   };
 
+  JsNaclDriver.prototype.load = function() {
+    return nacl_factory.instantiate((function(_this) {
+      return function(new_nacl) {
+        _this._instance = new_nacl;
+        _this.crypto_secretbox_KEYBYTES = _this.use().crypto_secretbox_KEYBYTES;
+        return require('nacl').API.forEach(function(f) {
+          return _this[f] = function() {
+            var e, inst;
+            inst = _this.use();
+            try {
+              return Utils.resolve(inst[f].apply(inst, arguments));
+            } catch (error) {
+              e = error;
+              return Utils.reject(e);
+            }
+          };
+        });
+      };
+    })(this), {
+      requested_total_memory: this.HEAP_SIZE
+    });
+  };
+
   JsNaclDriver.prototype.unload = function() {
-    this._unloadTimer = null;
     this._instance = null;
     return delete this._instance;
   };
@@ -592,7 +595,7 @@ JsNaclWebWorkerDriver = (function() {
       js_nacl_path = '../node_modules/js-nacl/lib/nacl_factory.js';
     }
     if (heap_size == null) {
-      heap_size = Math.pow(2, 23);
+      heap_size = Math.pow(2, 26);
     }
     random_reqs = {
       random_bytes: 32,
@@ -1445,6 +1448,22 @@ MailBox = (function(superClass) {
     return this.rawEncodeMessage(msg, gpk, sk);
   };
 
+  MailBox.prototype.encodeMessageSymmetric = function(msg, sk) {
+    Utils.ensure(msg, sk);
+    return MailBox._makeNonce().then((function(_this) {
+      return function(nonce) {
+        return Nacl.use().encode_latin1(msg).then(function(data) {
+          return Nacl.use().crypto_secretbox(data, nonce, sk).then(function(ctext) {
+            return {
+              nonce: nonce.toBase64(),
+              ctext: ctext.toBase64()
+            };
+          });
+        });
+      };
+    })(this));
+  };
+
   MailBox.prototype.decodeMessage = function(guest, nonce, ctext, session, skTag) {
     var gpk, sk;
     if (session == null) {
@@ -1459,6 +1478,15 @@ MailBox = (function(superClass) {
     }
     sk = this._getSecretKey(guest, session, skTag);
     return this.rawDecodeMessage(nonce.fromBase64(), ctext.fromBase64(), gpk, sk);
+  };
+
+  MailBox.prototype.decodeMessageSymmetric = function(nonce, ctext, sk) {
+    Utils.ensure(nonce, ctext, sk);
+    return Nacl.use().crypto_secretbox_open(ctext.fromBase64(), nonce.fromBase64(), sk.fromBase64()).then((function(_this) {
+      return function(data) {
+        return Nacl.use().decode_latin1(data);
+      };
+    })(this));
   };
 
   MailBox.prototype.connectToRelay = function(relay) {
@@ -1499,7 +1527,7 @@ MailBox = (function(superClass) {
 
   MailBox.prototype.relay_msg_status = function(relay, storage_token) {
     Utils.ensure(relay);
-    return relay.message_status(this, storage_token).then((function(_this) {
+    return relay.messageStatus(this, storage_token).then((function(_this) {
       return function(ttl) {
         return ttl;
       };
@@ -1525,13 +1553,21 @@ MailBox = (function(superClass) {
           var tag;
           if ((tag = _this.keyRing.tagByHpk(emsg.from))) {
             emsg['fromTag'] = tag;
-            return _this.decodeMessage(tag, emsg.nonce, emsg.data).then(function(msg) {
-              if (msg) {
-                emsg['msg'] = msg;
-                delete emsg.data;
-              }
-              return emsg;
-            });
+            if (emsg['kind'] === 'file') {
+              emsg = JSON.parse(emsg.data);
+              return _this.decodeMessage(tag, emsg.nonce, emsg.ctext).then(function(msg) {
+                msg.uploadID = emsg.uploadID;
+                return msg;
+              });
+            } else {
+              return _this.decodeMessage(tag, emsg.nonce, emsg.data).then(function(msg) {
+                if (msg) {
+                  emsg['msg'] = msg;
+                  delete emsg.data;
+                }
+                return emsg;
+              });
+            }
           } else {
             return emsg;
           }
@@ -1542,7 +1578,7 @@ MailBox = (function(superClass) {
 
   MailBox.prototype.relayNonceList = function(download) {
     Utils.ensure(download);
-    return Utils.map(download, function(i) {
+    return download.map(function(i) {
       return i.nonce;
     });
   };
@@ -1564,6 +1600,79 @@ MailBox = (function(superClass) {
   MailBox.prototype.selfDestruct = function(overseerAuthorized) {
     Utils.ensure(overseerAuthorized);
     return this.keyRing.selfDestruct(overseerAuthorized);
+  };
+
+  MailBox.prototype.getFileMetadata = function(relay, uploadID) {
+    Utils.ensure(relay, uploadID);
+    return this.relayMessages(relay).then((function(_this) {
+      return function(msgs) {
+        msgs = msgs.filter(function(msg) {
+          return msg.uploadID === uploadID;
+        });
+        return msgs[0];
+      };
+    })(this));
+  };
+
+  MailBox.prototype.startFileUpload = function(guest, relay, fileMetadata) {
+    Utils.ensure(relay, guest, fileMetadata);
+    return Nacl.h2(this._gPk(guest)).then((function(_this) {
+      return function(hpk) {
+        return Nacl.makeSecretKey().then(function(sk) {
+          fileMetadata.skey = sk.key.toBase64();
+          return _this.encodeMessage(guest, fileMetadata).then(function(encodedMetadata) {
+            return _this.connectToRelay(relay).then(function() {
+              var fileSize;
+              fileSize = fileMetadata.orig_size;
+              return relay.startFileUpload(_this, hpk, fileSize, encodedMetadata).then(function(response) {
+                response.skey = sk.key;
+                return response;
+              });
+            });
+          });
+        });
+      };
+    })(this));
+  };
+
+  MailBox.prototype.uploadFileChunk = function(relay, uploadID, chunk, part, totalParts, skey) {
+    Utils.ensure(relay, uploadID, chunk, totalParts, skey);
+    return this.encodeMessageSymmetric(chunk, skey).then((function(_this) {
+      return function(encodedChunk) {
+        return _this.connectToRelay(relay).then(function() {
+          return relay.uploadFileChunk(_this, uploadID, part, totalParts, encodedChunk);
+        });
+      };
+    })(this));
+  };
+
+  MailBox.prototype.getFileStatus = function(relay, uploadID) {
+    Utils.ensure(relay, uploadID);
+    return this.connectToRelay(relay).then((function(_this) {
+      return function() {
+        return relay.fileStatus(_this, uploadID);
+      };
+    })(this));
+  };
+
+  MailBox.prototype.downloadFileChunk = function(relay, uploadID, part, skey) {
+    Utils.ensure(relay, uploadID, skey);
+    return this.connectToRelay(relay).then((function(_this) {
+      return function() {
+        return relay.downloadFileChunk(_this, uploadID, part).then(function(encodedChunk) {
+          return _this.decodeMessageSymmetric(encodedChunk.nonce, encodedChunk.ctext, skey);
+        });
+      };
+    })(this));
+  };
+
+  MailBox.prototype.deleteFile = function(relay, uploadID) {
+    Utils.ensure(relay, uploadID);
+    return this.connectToRelay(relay).then((function(_this) {
+      return function() {
+        return relay.deleteFile(_this, uploadID);
+      };
+    })(this));
   };
 
   MailBox.prototype._gKey = function(strId) {
@@ -1814,7 +1923,7 @@ JsNaclDriver = require('js_nacl_driver');
 Nacl = (function() {
   function Nacl() {}
 
-  Nacl.API = ['crypto_secretbox_random_nonce', 'crypto_secretbox', 'crypto_secretbox_open', 'crypto_box', 'crypto_box_open', 'crypto_box_random_nonce', 'crypto_box_keypair', 'crypto_box_keypair_from_raw_sk', 'crypto_box_keypair_from_seed', 'crypto_hash_sha256', 'random_bytes', 'encode_utf8', 'decode_utf8', 'to_hex', 'from_hex'];
+  Nacl.API = ['crypto_secretbox_random_nonce', 'crypto_secretbox', 'crypto_secretbox_open', 'crypto_box', 'crypto_box_open', 'crypto_box_random_nonce', 'crypto_box_keypair', 'crypto_box_keypair_from_raw_sk', 'crypto_box_seed_keypair', 'crypto_box_keypair_from_seed', 'crypto_hash_sha256', 'random_bytes', 'encode_latin1', 'decode_latin1', 'encode_utf8', 'decode_utf8', 'to_hex', 'from_hex'];
 
   Nacl.prototype.naclImpl = null;
 
@@ -1876,6 +1985,14 @@ Nacl = (function() {
 
   Nacl.from_hex = function(data) {
     return this.use().from_hex(data);
+  };
+
+  Nacl.encode_latin1 = function(data) {
+    return this.use().encode_latin1(data);
+  };
+
+  Nacl.decode_latin1 = function(data) {
+    return this.use().decode_latin1(data);
   };
 
   Nacl.encode_utf8 = function(data) {
@@ -2116,7 +2233,8 @@ var Config, EventEmitter, Keys, Nacl, Relay, Utils,
   bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty,
-  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+  slice = [].slice;
 
 Config = require('config');
 
@@ -2134,8 +2252,12 @@ Relay = (function(superClass) {
   function Relay(url) {
     this.url = url != null ? url : null;
     this._ajax = bind(this._ajax, this);
+    this.retriesCount = 0;
+    if (this.url && localStorage) {
+      this.blockedTill = localStorage.getItem("blocked_" + this.url) || 0;
+    }
     this._resetState();
-    this.RELAY_COMMANDS = ['count', 'upload', 'download', 'message_status', 'delete'];
+    this.RELAY_COMMANDS = ['count', 'upload', 'download', 'messageStatus', 'delete', 'startFileUpload', 'uploadFileChunk', 'downloadFileChunk', 'fileStatus', 'deleteFile', 'getEntropy'];
   }
 
   Relay.prototype.openConnection = function() {
@@ -2164,18 +2286,22 @@ Relay = (function(superClass) {
         if (_this.clientTokenExpiration) {
           clearTimeout(_this.clientTokenExpiration);
         }
-        return _this._ajax('start_session', _this.clientToken.toBase64()).then(function(data) {
+        return _this._request('start_session', _this.clientToken.toBase64()).then(function(data) {
           var lines;
           _this._scheduleExpireSession();
           lines = _this._processData(data);
           _this.relayToken = lines[0].fromBase64();
-          _this.diff = lines.length === 2 ? parseInt(lines[1]) : 0;
-          if (_this.diff > 4) {
+          if (lines.length !== 2) {
+            throw new Error("Wrong start_session from " + _this.url);
+          }
+          _this.diff = parseInt(lines[1]);
+          if (_this.diff > 10) {
             console.log("Relay " + _this.url + " requested difficulty " + _this.diff + ". Session handshake may take longer.");
           }
           if (_this.diff > 16) {
-            return console.log("Attempting handshake at difficulty " + _this.diff + "! This may take a while");
+            console.log("Attempting handshake at difficulty " + _this.diff + "! This may take a while");
           }
+          return data;
         });
       };
     })(this));
@@ -2208,13 +2334,15 @@ Relay = (function(superClass) {
           });
         }
         return next.then(function(sessionHandshake) {
-          return _this._ajax('verify_session', _this.h2ClientToken + "\r\n" + sessionHandshake + "\r\n").then(function(d) {
+          return _this._request('verify_session', _this.h2ClientToken, sessionHandshake).then(function(d) {
             var relayPk;
             relayPk = d.fromBase64();
             _this.relayKey = new Keys({
               boxPk: relayPk
             });
-            return _this.online = true;
+            _this.online = true;
+            delete _this.diff;
+            return d;
           });
         });
       };
@@ -2227,26 +2355,13 @@ Relay = (function(superClass) {
   };
 
   Relay.prototype.connectMailbox = function(mbx) {
-    var clientTemp, relayId;
+    var relayId;
     Utils.ensure(mbx, this.online, this.relayKey, this.url);
     relayId = this.relayId();
-    return clientTemp = mbx.createSessionKey(relayId, true).then((function(_this) {
+    return mbx.createSessionKey(relayId, true).then((function(_this) {
       return function(key) {
-        var maskedClientTempPk, sign;
-        clientTemp = key.boxPk;
-        mbx.keyRing.addTempGuest(relayId, _this.relayKey.strPubKey());
-        delete _this.relayKey;
-        maskedClientTempPk = clientTemp.toBase64();
-        sign = clientTemp.concat(_this.relayToken).concat(_this.clientToken);
-        return Nacl.h2(sign).then(function(h2Sign) {
-          return mbx.encodeMessage(relayId, h2Sign).then(function(inner) {
-            inner['pub_key'] = mbx.keyRing.getPubCommKey();
-            return mbx.encodeMessage(relayId, inner, true).then(function(outer) {
-              return _this._ajax('prove', (_this.h2ClientToken + "\r\n") + (maskedClientTempPk + "\r\n") + (outer.nonce + "\r\n") + ("" + outer.ctext)).then(function(d) {
-                return relayId;
-              });
-            });
-          });
+        return _this._request('prove', mbx, key.boxPk).then(function(d) {
+          return relayId;
         });
       };
     })(this));
@@ -2267,18 +2382,108 @@ Relay = (function(superClass) {
     if (params) {
       data = Utils.extend(data, params);
     }
-    return mbx.encodeMessage("relay_" + this.url, data, true).then((function(_this) {
-      return function(message) {
-        return _this._ajax('command', ((mbx.hpk()) + "\r\n") + (message.nonce + "\r\n") + ("" + message.ctext)).then(function(d) {
-          if (d == null) {
-            throw new Error(_this.url + " - " + cmd + " error");
-          }
-          if (cmd === 'count' || cmd === 'upload' || cmd === 'download' || cmd === 'message_status') {
-            return _this._processResponse(d, mbx, cmd, params);
-          } else {
-            return JSON.parse(d);
-          }
-        });
+    return this._request('command', mbx, data).then((function(_this) {
+      return function(d) {
+        if (d == null) {
+          throw new Error(_this.url + " - " + cmd + " error");
+        }
+        return _this._processResponse(d, mbx, cmd, params);
+      };
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        throw new Error(_this.url + " - " + cmd + " - " + err.message);
+      };
+    })(this));
+  };
+
+  Relay.prototype._request = function(type, param1, param2) {
+    var clientTempPk, ctext, mbx, payload, request, sign;
+    Utils.ensure(type, param1);
+    if ((this.blockedTill != null) && this.blockedTill > Date.now()) {
+      throw new Error('Relay disabled till ' + new Date(parseInt(this.blockedTill, 10)));
+    }
+    if (this.retriesCount >= Config.RELAY_RETRY_REQUEST_ATTEMPTS) {
+      this.retriesCount = 0;
+      this.blockedTill = Date.now() + Config.RELAY_BLOCKING_TIME;
+      if (localStorage) {
+        localStorage.setItem("blocked_" + this.url, this.blockedTill);
+      }
+      throw new Error('Relay out of reach');
+    }
+    switch (type) {
+      case 'start_session':
+        request = this._ajax('start_session', param1);
+        break;
+      case 'verify_session':
+        request = this._ajax('verify_session', param1, param2);
+        break;
+      case 'prove':
+        mbx = param1;
+        clientTempPk = param2;
+        mbx.keyRing.addTempGuest(this.relayId(), this.relayKey.strPubKey());
+        delete this.relayKey;
+        sign = clientTempPk.concat(this.relayToken).concat(this.clientToken);
+        request = Nacl.h2(sign).then((function(_this) {
+          return function(h2Sign) {
+            return mbx.encodeMessage(_this.relayId(), h2Sign).then(function(inner) {
+              inner['pub_key'] = mbx.keyRing.getPubCommKey();
+              return mbx.encodeMessage(_this.relayId(), inner, true).then(function(outer) {
+                return _this._ajax('prove', _this.h2ClientToken, clientTempPk.toBase64(), outer.nonce, outer.ctext);
+              });
+            });
+          };
+        })(this));
+        break;
+      case 'command':
+        if (param2.cmd === 'uploadFileChunk') {
+          ctext = param2.ctext;
+          payload = Utils.extend({}, param2);
+          delete payload.ctext;
+          request = param1.encodeMessage(this.relayId(), payload, true).then((function(_this) {
+            return function(message) {
+              return _this._ajax('command', param1.hpk(), message.nonce, message.ctext, ctext);
+            };
+          })(this));
+        } else {
+          request = param1.encodeMessage(this.relayId(), param2, true).then((function(_this) {
+            return function(message) {
+              return _this._ajax('command', param1.hpk(), message.nonce, message.ctext);
+            };
+          })(this));
+        }
+        break;
+      default:
+        throw new Error("Unknown request type " + type);
+    }
+    return request.then((function(_this) {
+      return function(data) {
+        _this.retriesCount = 0;
+        _this.blockedTill = 0;
+        return data;
+      };
+    })(this))["catch"]((function(_this) {
+      return function(err) {
+        var ref, ref1;
+        if ((ref = (ref1 = err.response) != null ? ref1.status : void 0) !== 401 && ref !== 500) {
+          throw new Error('Bad Request');
+        }
+        _this.retriesCount++;
+        _this._resetState();
+        if (type === 'start_session') {
+          return _this.getServerToken();
+        } else if (type === 'verify_session') {
+          return _this.openConnection();
+        } else if (type === 'prove') {
+          return _this.openConnection().then(function() {
+            return _this.connectMailbox(param1);
+          });
+        } else {
+          return _this.openConnection().then(function() {
+            return _this.connectMailbox(param1).then(function() {
+              return _this._request(type, param1, param2);
+            });
+          });
+        }
       };
     })(this));
   };
@@ -2286,6 +2491,9 @@ Relay = (function(superClass) {
   Relay.prototype._processResponse = function(d, mbx, cmd, params) {
     var ctext, datain, nonce;
     datain = this._processData(String(d));
+    if (cmd === 'delete') {
+      return JSON.parse(d);
+    }
     if (cmd === 'upload') {
       if (!(datain.length === 1 && datain[0].length === Config.RELAY_TOKEN_B64)) {
         throw new Error(this.url + " - " + cmd + ": Bad response");
@@ -2293,18 +2501,40 @@ Relay = (function(superClass) {
       params.storage_token = d;
       return params;
     }
-    if (cmd === 'message_status') {
+    if (cmd === 'messageStatus') {
       if (datain.length !== 1) {
         throw new Error(this.url + " - " + cmd + ": Bad response");
       }
       return parseInt(datain[0]);
+    }
+    if (cmd === 'downloadFileChunk') {
+      if (datain.length !== 3) {
+        throw new Error(this.url + " - " + cmd + ": Bad response");
+      }
+      nonce = datain[0];
+      ctext = datain[1];
+      return mbx.decodeMessage(this.relayId(), nonce, ctext, true).then((function(_this) {
+        return function(response) {
+          response = JSON.parse(response);
+          response.ctext = datain[2];
+          return response;
+        };
+      })(this));
     }
     if (datain.length !== 2) {
       throw new Error(this.url + " - " + cmd + ": Bad response");
     }
     nonce = datain[0];
     ctext = datain[1];
-    return mbx.decodeMessage("relay_" + this.url, nonce, ctext, true);
+    if (cmd === 'startFileUpload' || cmd === 'fileStatus' || cmd === 'uploadFileChunk' || cmd === 'deleteFile') {
+      return mbx.decodeMessage(this.relayId(), nonce, ctext, true).then((function(_this) {
+        return function(response) {
+          return JSON.parse(response);
+        };
+      })(this));
+    } else {
+      return mbx.decodeMessage(this.relayId(), nonce, ctext, true);
+    }
   };
 
   Relay.prototype._processData = function(d) {
@@ -2314,6 +2544,12 @@ Relay = (function(superClass) {
       datain = d.split('\n');
     }
     return datain;
+  };
+
+  Relay.prototype._ajax = function() {
+    var cmd, data;
+    cmd = arguments[0], data = 2 <= arguments.length ? slice.call(arguments, 1) : [];
+    return Utils.ajax(this.url + "/" + cmd, data.join('\r\n'));
   };
 
   Relay.prototype.count = function(mbx) {
@@ -2327,8 +2563,8 @@ Relay = (function(superClass) {
     });
   };
 
-  Relay.prototype.message_status = function(mbx, storage_token) {
-    return this.runCmd('message_status', mbx, {
+  Relay.prototype.messageStatus = function(mbx, storage_token) {
+    return this.runCmd('messageStatus', mbx, {
       token: storage_token
     });
   };
@@ -2340,6 +2576,43 @@ Relay = (function(superClass) {
   Relay.prototype["delete"] = function(mbx, nonceList) {
     return this.runCmd('delete', mbx, {
       payload: nonceList
+    });
+  };
+
+  Relay.prototype.startFileUpload = function(mbx, toHpk, fileSize, metadata) {
+    return this.runCmd('startFileUpload', mbx, {
+      to: toHpk.toBase64(),
+      file_size: fileSize,
+      metadata: metadata
+    });
+  };
+
+  Relay.prototype.uploadFileChunk = function(mbx, uploadID, part, totalParts, payload) {
+    return this.runCmd('uploadFileChunk', mbx, {
+      uploadID: uploadID,
+      part: part,
+      last_chunk: totalParts - 1 === part,
+      nonce: payload.nonce,
+      ctext: payload.ctext
+    });
+  };
+
+  Relay.prototype.fileStatus = function(mbx, uploadID) {
+    return this.runCmd('fileStatus', mbx, {
+      uploadID: uploadID
+    });
+  };
+
+  Relay.prototype.downloadFileChunk = function(mbx, uploadID, chunk) {
+    return this.runCmd('downloadFileChunk', mbx, {
+      uploadID: uploadID,
+      part: chunk
+    });
+  };
+
+  Relay.prototype.deleteFile = function(mbx, uploadID) {
+    return this.runCmd('deleteFile', mbx, {
+      uploadID: uploadID
     });
   };
 
@@ -2357,7 +2630,7 @@ Relay = (function(superClass) {
   };
 
   Relay.prototype.timeToSessionExpiration = function(mbx) {
-    return mbx.timeToSessionExpiration("relay_" + this.url);
+    return mbx.timeToSessionExpiration(this.relayId());
   };
 
   Relay.prototype._scheduleExpireSession = function() {
@@ -2371,10 +2644,6 @@ Relay = (function(superClass) {
         return _this.emit('relaytokentimeout');
       };
     })(this), Config.RELAY_TOKEN_TIMEOUT);
-  };
-
-  Relay.prototype._ajax = function(cmd, data) {
-    return Utils.ajax(this.url + "/" + cmd, data);
   };
 
   return Relay;
@@ -2492,14 +2761,6 @@ Utils = (function() {
     }
   };
 
-  Utils.map = function(array, func) {
-    if (typeof $ !== "undefined" && $ !== null ? $.map : void 0) {
-      return typeof $ !== "undefined" && $ !== null ? $.map(array, func) : void 0;
-    } else {
-      return Array.prototype.map.apply(array, [func]);
-    }
-  };
-
   Utils.include = function(klass, mixin) {
     return this.extend(klass.prototype, mixin);
   };
@@ -2544,23 +2805,6 @@ Utils = (function() {
           return response.data;
         });
       });
-    } else if (typeof Q !== "undefined" && Q !== null ? Q.xhr : void 0) {
-      return this.setAjaxImpl(function(url, data) {
-        return Q.xhr({
-          method: 'POST',
-          url: url,
-          headers: {
-            'Accept': 'text/plain',
-            'Content-Type': 'text/plain'
-          },
-          data: data,
-          responseType: 'text',
-          timeout: Config.RELAY_AJAX_TIMEOUT,
-          disableUploadProgress: true
-        }).then(function(response) {
-          return response.data;
-        });
-      });
     } else if ((typeof $ !== "undefined" && $ !== null ? $.ajax : void 0) && (typeof $ !== "undefined" && $ !== null ? $.Deferred : void 0)) {
       return this.setAjaxImpl(function(url, data) {
         return $.ajax({
@@ -2600,15 +2844,6 @@ Utils = (function() {
         },
         all: function(arr) {
           return Promise.all(arr);
-        }
-      });
-    } else if (typeof Q !== "undefined" && Q !== null) {
-      return this.setPromiseImpl({
-        promise: function(resolver) {
-          return Q.promise(resolver);
-        },
-        all: function(arr) {
-          return Q.all(arr);
         }
       });
     } else {
@@ -2679,20 +2914,6 @@ Utils = (function() {
     return false;
   };
 
-  Utils.logStack = function(err) {
-    var i, j, len, results, s, sl;
-    if (!err) {
-      err = new Error('stackLog');
-    }
-    s = err.stack.replace(/^[^\(]+?[\n$]/gm, '').replace(/^\s+at\s+/gm, '').replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@').split('\n');
-    results = [];
-    for (i = j = 0, len = s.length; j < len; i = ++j) {
-      sl = s[i];
-      results.push(console.log(i + ": " + sl));
-    }
-    return results;
-  };
-
   Utils.resolve = function(value) {
     return this.getPromiseImpl().promise(function(res, rej) {
       return res(value);
@@ -2729,19 +2950,6 @@ Utils = (function() {
       };
     })(this);
     return iter(arr[++i]);
-  };
-
-  Utils.incrementByteCounter = function(counter) {
-    var b, i, j;
-    for (i = j = counter.length - 1; j >= 0; i = j += -1) {
-      b = counter[i];
-      if (b === 255) {
-        counter[i] = 0;
-      } else {
-        counter[i]++;
-        return;
-      }
-    }
   };
 
   Utils.ENSURE_ERROR_MSG = 'invalid arguments';

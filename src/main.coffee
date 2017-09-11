@@ -26,15 +26,23 @@ module.exports =
   # - crypto_box_random_nonce(): Promise(nonce)
   # - crypto_box_keypair(): Promise(kp)
   # - crypto_box_keypair_from_raw_sk(raw_sk): Promise(kp)
+  # - crypto_box_seed_keypair(seed): Promise(kp)
   # - crypto_box_keypair_from_seed(seed): Promise(kp)
   # - crypto_hash_sha256(data): Promise(hash)
   # - random_bytes(size): Promise(bytes)
+  # - encode_latin1(string): Promise(Uint8Array)
+  # - decode_latin1(Uint8Array): Promise(string)
   # - encode_utf8(utf8): Promise(data)
   # - decode_utf8(data): Promise(utf8)
   # - to_hex(data): Promise(hex)
   # - from_hex(hex): Promise(data)
+  #
   setNaclImpl: (naclImpl)->
     @Nacl.setNaclImpl(naclImpl)
+
+  # js-nacl note: crypto_box_keypair_from_seed(seed)
+  # This call will be deprecated,
+  # keeping for compatibility with native driver.
 
   # promiseImpl requried API:
   # - promise(func(resolve, reject)): Promise - a deferrable Promise

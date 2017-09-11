@@ -18,15 +18,18 @@ timeout = max_test * window.__globalTest.timeouts.tiny
 
 describe 'Stress Test', ->
   return unless window.__globalTest.runTests['relay stress']
-  return done() if window.__globalTest.offline
-
+  @slow(window.__globalTest.slow)
   @timeout(timeout)
+
+  before ->
+    @skip() if __globalTest.offline
+
   r = new Relay(__globalTest.host)
 
   mbx = []
   # create test mailboxes
-  it 'create mailboxes', (done)->
-    handle done, Utils.all [0...max_test].map (i)->
+  it 'create mailboxes', ->
+    Utils.all [0...max_test].map (i)->
       MailBox.new("mbx_08_#{i}").then (m)->
         mbx.push(m)
     .then ->
@@ -44,8 +47,7 @@ describe 'Stress Test', ->
             # add key d <= i
             tasks.push mbx[d].keyRing.addGuest("guest#{3 + j}", mbx[i].getPubCommKey())
             # console.log "#{j} <=> #{d}"
-        Utils.all(tasks).then ->
-          done()
+        Utils.all(tasks)
 
   # Tests 08-11 are built using a different schema. Instead of declaring a
   # singular test with mocha's 'it' function, we programmatically generate a
@@ -58,10 +60,9 @@ describe 'Stress Test', ->
 
   # send test messages and get a few back
   for k in [0...max_test]
-    it "test #{k}", (done)->
-      return done() if __globalTest.offline
+    it "test #{k}", ->
       i = window.__globalTest.idx801++
-      handle done, mbx[i].sendToVia('guest0', r, "test msg #{i}=>g0").then ->
+      mbx[i].sendToVia('guest0', r, "test msg #{i}=>g0").then ->
         mbx[i].relaySend('guest1', "test msg #{i}=>g1", r).then ->
           mbx[i].relaySend('guest2', "test msg #{i}=>g2", r).then ->
             mbx[i].relayMessages(r).then (download)->
@@ -69,22 +70,18 @@ describe 'Stress Test', ->
                 expect(download[0].msg).to.include 'test'
               if download.length > 1
                 expect(download[1].msg).to.include 'test'
-              done()
 
   # get the last messages back
   window.__globalTest.idx802 = 0
   for k in [0...max_test]
-    it "download #{k}", (done)->
-      return done() if __globalTest.offline
+    it "download #{k}", ->
       i = window.__globalTest.idx802++
-      handle done, mbx[i].getRelayMessages(r).then (download)->
+      mbx[i].getRelayMessages(r).then (download)->
         l = mbx[i].relayNonceList(download)
-        mbx[i].relayDelete(l, r).then ->
-          done()
+        mbx[i].relayDelete(l, r)
 
-  it 'cleanup', (done)->
+  it 'cleanup', ->
     tasks = []
     for i in [0...max_test]
       tasks.push mbx[i].selfDestruct(true)
-    handle done, Utils.all(tasks).then ->
-      done()
+    Utils.all(tasks)

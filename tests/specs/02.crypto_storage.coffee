@@ -13,18 +13,17 @@ describe 'Storage service', ->
 
   ST = null
 
-  it 'constructs', (done)->
-    handle done, CryptoStorage.new({}).then (_ST)-> # dummy key
+  it 'constructs', ->
+    CryptoStorage.new({}).then (_ST)-> # dummy key
       ST = _ST
-      done()
 
   it 'tagging', ->
     ST.tag('hello world').should.equal('hello world.v1.stor.vlt12')
     ST.tag('1234567890').should.equal('1234567890.v1.stor.vlt12')
     expect(ST.tag(null)).is.null
 
-  it 'low level write/read', (done)->
-    handle done, ST._set('hello world', 'wello horld').then ->
+  it 'low level write/read', ->
+    ST._set('hello world', 'wello horld').then ->
       ST._localGet('hello world').then (ret)->
         expect(ret).is.null
         ST._localGet(ST.tag('hello world')).then (ret)->
@@ -38,10 +37,9 @@ describe 'Storage service', ->
                 ST._localRemove(ST.tag('hello world')).then ->
                   ST._get('hello world').then (ret)->
                     expect(ret).is.null
-                    done()
 
-  it 'make new key', (done)->
-    handle done, CryptoStorage.new().then (_ST)->
+  it 'make new key', ->
+    CryptoStorage.new().then (_ST)->
       ST = _ST
       expect(ST.storageKey).not.null
 
@@ -53,7 +51,6 @@ describe 'Storage service', ->
 
           CryptoStorage.new(ST.storageKey).then (ST2)->
             ST.storageKey.key.should.equal(ST2.storageKey.key)
-            done()
 
   secret1 = 'hello world'
   secret2 =
@@ -64,8 +61,8 @@ describe 'Storage service', ->
       d: [1, 2, 3, 'big', 'secrets']
       f: 'в военное время значение π достигало 4ех'
 
-  it 'encrypted write/read', (done)->
-    handle done, ST.save('hello', secret1).then ->
+  it 'encrypted write/read', ->
+    ST.save('hello', secret1).then ->
       ST.get('hello').then (ret)->
         ret.should.equal(secret1)
 
@@ -80,10 +77,9 @@ describe 'Storage service', ->
                   expect(ret).is.null
                   ST._get('hello2').then (ret)->
                     expect(ret).is.null
-                    done()
 
-  it 'restore with key', (done)->
-    handle done, CryptoStorage.new().then (ST)->
+  it 'restore with key', ->
+    CryptoStorage.new().then (ST)->
       ST.newKey().then ->
         ST.save('hello', secret2).then ->
           key = ST.storageKey.toString() # b64 string
@@ -95,13 +91,11 @@ describe 'Storage service', ->
               ST.remove('hello').then ->
                 ST._get('hello').then (ret)->
                   expect(ret).is.null
-                  done()
 
-  it 'clean storage key', (done)->
-    handle done, CryptoStorage.new().then (ST)->
+  it 'clean storage key', ->
+    CryptoStorage.new().then (ST)->
       ST._localGet('storage_key.v1.stor.vlt12').then (ret)->
         expect(ret).not.null
         ST.selfDestruct(true).then ->
           ST._localGet('storage_key.v1.stor.vlt12').then (ret)->
             expect(ret).is.null
-            done()

@@ -1,8 +1,11 @@
 # Glow [![Build Status](https://travis-ci.org/vault12/glow.svg?branch=master)](https://travis-ci.org/vault12/glow)
 Glow is a reference client library for interacting with [Zax](https://github.com/vault12/zax), a [NaCl-based Cryptographic Relay](https://s3-us-west-1.amazonaws.com/vault12/zax_infogfx.jpg). You can read the full technical specification [here](http://bit.ly/nacl_relay_spec). This reference implementation is in [CoffeeScript](http://coffeescript.org). We will add links to other implementations in different languages as they become available.
 
+## Version 4.0 Update
+Glow 4.0 introduces support for Zax 2.0 [file exchange api](https://github.com/vault12/zax/wiki/Zax-2.0-File-Commands). Full documentation is avaiable [here](https://github.com/vault12/zax/blob/master/README.md)
+
 ## Test Dashboard
- Glow powers a test [Dashboard](https://github.com/vault12/zax-dash) app to provide user-friendly access point to given relay internal mailboxes. We maintain live [Test Server](https://zax_test.vault12.com) that runs our latest build. For testing purposes expiration on that relay is set for 30 minutes.
+ Glow powers a test [Dashboard](https://github.com/vault12/zax-dash) app to provide user-friendly access point to given relay internal mailboxes. We maintain live [Test Server](https://z.vault12.com) that runs our latest build. For testing purposes expiration on that relay is set for 30 minutes.
 
 ## Installation
 Glow can be easily installed via `npm`, which is included when you install [Node.js](https://nodejs.org/).
@@ -17,7 +20,7 @@ By default, the unit tests connect to known [Zax](https://github.com/vault12/zax
 You may change this by modifying the code in [tests/helper.coffee#L57](tests/helper.coffee#L57)
 
 ```CoffeeScript
-host: 'https://zax_test.vault12.com'
+host: 'https://z.vault12.com'
 ```
 To create a build and run the tests, navigate to the glow directory and type the following in a terminal:
 
@@ -30,7 +33,7 @@ Note that if you have [Gulp](https://github.com/gulpjs/gulp) installed globally,
 Note that only one instance of tests can be run at the same time, since test keys are derived from the same seeds. Running multiple instances simultaneously may cause unpredicted behavior.
 
 ##### Source maps
-By default, the build generates source maps and places them in the `build` directory. 
+By default, the build generates source maps and places them in the `build` directory.
 
 If you are new to using source maps to debug, here's an overview:
 
@@ -58,7 +61,7 @@ node_modules/gulp/bin/gulp.js dist
 This will create the appropriate files in the following directory: `dist`
 
 ## Demo
-To see Glow and Zax in action, check out the [Live Demo](https://zax_test.vault12.com). This is a test project included in Zax called [Zax-Dash](https://github.com/vault12/zax-dash).
+To see Glow and Zax in action, check out the [Live Demo](https://z.vault12.com). This is a test project included in Zax called [Zax-Dash](https://github.com/vault12/zax-dash).
 
 ## Contributing
 We encourage you to contribute to Glow using [pull requests](https://github.com/vault12/glow/pulls)! Please check out the [Contributing to Glow Guide](CONTRIBUTING.md) for guidelines about how to proceed.

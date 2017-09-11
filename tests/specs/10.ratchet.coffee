@@ -15,14 +15,18 @@ timeout = max_test * window.__globalTest.timeouts.tiny
 
 describe 'Key Ratchet', ->
   return unless window.__globalTest.runTests['relay ratchet']
+  @slow(window.__globalTest.slow)
   @timeout(timeout)
+
+  before ->
+    @skip() if __globalTest.offline
 
   r = new Relay(__globalTest.host)
 
   mbx = []
   # create test mailboxes
-  it 'create ratchets', (done)->
-    handle done, Utils.all [0...max_test].map (i)->
+  it 'create ratchets', ->
+    Utils.all [0...max_test].map (i)->
       RatchetBox.new("mbx_10_#{i}").then (m)->
         mbx.push(m)
     .then ->
@@ -39,42 +43,36 @@ describe 'Key Ratchet', ->
             k++ while (d = seq(i + j + seed + k)) is i
             tasks.push mbx[i].keyRing.addGuest("guest#{j}", mbx[d].getPubCommKey())
             tasks.push mbx[d].keyRing.addGuest("guest#{3 + j}", mbx[i].getPubCommKey())
-        Utils.all(tasks).then ->
-          done()
+        Utils.all(tasks)
 
   # ---- Simple test ----
   # Each mailbox will send a few msgs to only 1 recepient and they will then
   # move the ratchet one step forward
   window.__globalTest.idx101 = 0
   for k in [0...max_test]
-    it "test #{k}", (done)->
-      return done() if __globalTest.offline
+    it "test #{k}", ->
       i = window.__globalTest.idx101++
-      handle done, mbx[i].sendToVia('guest0', r, "ratchet #1 #{i}=>g0").then ->
+      mbx[i].sendToVia('guest0', r, "ratchet #1 #{i}=>g0").then ->
         mbx[i].relaySend('guest0', "ratchet #2 #{i}=>g0", r).then ->
           mbx[i].relaySend('guest0', "ratchet #3 #{i}=>g0", r).then ->
             mbx[i].relayMessages(r).then (download)->
               if download.length > 0
                 for m in download
                   expect(m.msg).to.contain 'ratchet' if m.msg?
-              done()
 
   # get the last messages back
   window.__globalTest.idx102 = 0
   for k in [0...max_test]
-    it "download #{k}", (done)->
-      return done() if __globalTest.offline
+    it "download #{k}", ->
       i = window.__globalTest.idx102++
-      handle done, mbx[i].getRelayMessages(r).then (download)->
+      mbx[i].getRelayMessages(r).then (download)->
         l = mbx[i].relayNonceList(download)
-        mbx[i].relayDelete(l, r).then ->
-          done()
+        mbx[i].relayDelete(l, r)
 
   # delete mailboxes after a delay to let previous requests complete
   window.__globalTest.idx103 = 0
   window.__globalTest.idx104 = 0
   for k in [0...max_test]
     j = window.__globalTest.idx103++
-    it "cleanup #{j}", (done)->
-      handle done, mbx[window.__globalTest.idx104++].selfDestruct(true, true).then ->
-        done()
+    it "cleanup #{j}", ->
+      mbx[window.__globalTest.idx104++].selfDestruct(true, true)

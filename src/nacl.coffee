@@ -18,9 +18,12 @@ class Nacl
     'crypto_box_random_nonce'
     'crypto_box_keypair'
     'crypto_box_keypair_from_raw_sk'
-    'crypto_box_keypair_from_seed'
+    'crypto_box_seed_keypair'
+    'crypto_box_keypair_from_seed' # deprecated
     'crypto_hash_sha256'
     'random_bytes'
+    'encode_latin1'
+    'decode_latin1'
     'encode_utf8'
     'decode_utf8'
     'to_hex'
@@ -64,6 +67,8 @@ class Nacl
 
   # Returns a Promise
   @fromSeed: (seed)->
+    # Update to this call when native driver is updated
+    # @use().crypto_box_seed_keypair(seed).then (kp)->
     @use().crypto_box_keypair_from_seed(seed).then (kp)->
       new Keys(kp)
 
@@ -78,6 +83,14 @@ class Nacl
   # Returns a Promise
   @from_hex: (data)->
     @use().from_hex(data)
+
+  # Returns a Promise
+  @encode_latin1: (data)->
+    @use().encode_latin1(data)
+
+  # Returns a Promise
+  @decode_latin1: (data)->
+    @use().decode_latin1(data)
 
   # Returns a Promise
   @encode_utf8: (data)->

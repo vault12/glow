@@ -1,3 +1,8 @@
+### v4.0.0
+
+* Add commands and tests for file API
+* Reset a session when request errors occur
+
 ### v3.0.3
 
 * Added web worker to dist
@@ -5,8 +10,15 @@
 
 ### v3.0.2
 
+* Distribute NACL driver together with the library
+
+### v3.0.1
+
 * Run tests in CLI and Travis CI
-* Sourcemap support
+
+### v3.0.0
+
+* Sourcemap support 
 
 ### v2.0.7
 
@@ -25,6 +37,7 @@
 * support for optional multiSet
 
 ### v2.0.3
+
 * Mailbox hpk precompute
 * Axios
 * Nonce can accept int32 custom data
@@ -65,6 +78,7 @@
 
 * Fixing guest persist bug
 * Fixing js camelcase naming conventions
+
 
 ### v1.0.9
 

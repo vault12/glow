@@ -145,6 +145,15 @@ class MailBox extends EventEmitter
     # That int32 (on receive/decode) can be restored via _nonceData()
     @rawEncodeMessage(msg, gpk, sk)
 
+  # Returns a Promise
+  encodeMessageSymmetric: (msg, sk)->
+    Utils.ensure(msg, sk)
+    MailBox._makeNonce().then (nonce)=>
+      Nacl.use().encode_latin1(msg).then (data)=>
+        Nacl.use().crypto_secretbox(data, nonce, sk).then (ctext)=>
+          nonce: nonce.toBase64()
+          ctext: ctext.toBase64()
+
   # Decodes a ciphertext from a guest key already in our keyring with this
   # nonce. If session flag is set, looks for keys in temporary, not the
   # persistent collection of session keys. skTag (optional) lets you specify
@@ -155,6 +164,12 @@ class MailBox extends EventEmitter
     throw new Error("decodeMessage: don't know guest #{guest}") unless (gpk = @_gPk(guest))
     sk = @_getSecretKey(guest, session, skTag)
     @rawDecodeMessage(nonce.fromBase64(), ctext.fromBase64(), gpk, sk)
+
+  # Returns a Promise
+  decodeMessageSymmetric: (nonce, ctext, sk)->
+    Utils.ensure(nonce, ctext, sk)
+    Nacl.use().crypto_secretbox_open(ctext.fromBase64(), nonce.fromBase64(), sk.fromBase64()).then (data)=>
+      Nacl.use().decode_latin1(data)
 
   # Establishes a session, exchanges temp keys and proves our ownership of this
   # Mailbox to this specific relay. This is the first function to start
@@ -204,7 +219,7 @@ class MailBox extends EventEmitter
   # Returns a Promise(ttl)
   relay_msg_status: (relay, storage_token) ->
     Utils.ensure(relay)
-    relay.message_status(@,storage_token).then (ttl) =>
+    relay.messageStatus(@, storage_token).then (ttl) =>
       ttl
 
   # Sends a free-form object to a guest we already have in our keyring
@@ -223,11 +238,17 @@ class MailBox extends EventEmitter
       Utils.all result.map (emsg)=>
         if (tag = @keyRing.tagByHpk(emsg.from))
           emsg['fromTag'] = tag
-          @decodeMessage(tag, emsg.nonce, emsg.data).then (msg)=>
-            if msg
-              emsg['msg'] = msg
-              delete emsg.data
-            emsg
+          if (emsg['kind'] == 'file')
+            emsg = JSON.parse emsg.data
+            @decodeMessage(tag, emsg.nonce, emsg.ctext).then (msg)=>
+              msg.uploadID = emsg.uploadID
+              msg
+          else
+            @decodeMessage(tag, emsg.nonce, emsg.data).then (msg)=>
+              if msg
+                emsg['msg'] = msg
+                delete emsg.data
+              emsg
         else
           emsg
 
@@ -236,7 +257,7 @@ class MailBox extends EventEmitter
   # Synchronous
   relayNonceList: (download)->
     Utils.ensure(download)
-    Utils.map download, (i) -> i.nonce
+    download.map (i) -> i.nonce
 
   # Deletes messages from the relay given a list of message nonces.
   # Returns a Promise
@@ -259,6 +280,55 @@ class MailBox extends EventEmitter
   selfDestruct: (overseerAuthorized)->
     Utils.ensure(overseerAuthorized)
     @keyRing.selfDestruct(overseerAuthorized)
+
+  # --- Operations with files ---
+
+  # Returns a Promise
+  getFileMetadata: (relay, uploadID)->
+    Utils.ensure(relay, uploadID)
+    @relayMessages(relay).then (msgs)=>
+      msgs = msgs.filter (msg) => msg.uploadID == uploadID
+      msgs[0]
+
+  # Returns a Promise
+  startFileUpload: (guest, relay, fileMetadata)->
+    Utils.ensure(relay, guest, fileMetadata)
+    Nacl.h2(@_gPk(guest)).then (hpk)=>
+      Nacl.makeSecretKey().then (sk)=>
+        fileMetadata.skey = sk.key.toBase64()
+        @encodeMessage(guest, fileMetadata).then (encodedMetadata)=>
+          @connectToRelay(relay).then =>
+            fileSize = fileMetadata.orig_size
+            relay.startFileUpload(@, hpk, fileSize, encodedMetadata).then (response)=>
+              # append symmetric secret key (unique for this upload session) to the server response
+              response.skey = sk.key
+              response
+
+  # Returns a Promise
+  uploadFileChunk: (relay, uploadID, chunk, part, totalParts, skey)->
+    Utils.ensure(relay, uploadID, chunk, totalParts, skey)
+    @encodeMessageSymmetric(chunk, skey).then (encodedChunk)=>
+      @connectToRelay(relay).then =>
+        relay.uploadFileChunk(@, uploadID, part, totalParts, encodedChunk)
+
+  # Returns a Promise
+  getFileStatus: (relay, uploadID)->
+    Utils.ensure(relay, uploadID)
+    @connectToRelay(relay).then =>
+      relay.fileStatus(@, uploadID)
+
+  # Returns a Promise
+  downloadFileChunk: (relay, uploadID, part, skey)->
+    Utils.ensure(relay, uploadID, skey)
+    @connectToRelay(relay).then =>
+      relay.downloadFileChunk(@, uploadID, part).then (encodedChunk)=>
+        @decodeMessageSymmetric(encodedChunk.nonce, encodedChunk.ctext, skey)
+
+  # Returns a Promise
+  deleteFile: (relay, uploadID)->
+    Utils.ensure(relay, uploadID)
+    @connectToRelay(relay).then =>
+      relay.deleteFile(@, uploadID)
 
   # --- Protected helpers ---
 

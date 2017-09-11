@@ -21,13 +21,6 @@ class Utils
           target[key] = source[key]
       target
 
-  @map = (array, func) ->
-    if $?.map
-      $?.map array, func
-    else
-      # http://caniuse.com/#search=map
-      Array::map.apply array, [ func ]
-
   # convenience function for extending an object by class
   @include = (klass, mixin) ->
     @extend klass.prototype, mixin
@@ -69,21 +62,6 @@ class Utils
           timeout: Config.RELAY_AJAX_TIMEOUT
         .then (response)->
           response.data
-    # Q.xhr + Q; https://github.com/nathanboktae/q-xhr
-    else if Q?.xhr
-      @setAjaxImpl (url, data)->
-        Q.xhr
-          method: 'POST'
-          url: url
-          headers:
-            'Accept': 'text/plain'
-            'Content-Type': 'text/plain'
-          data: data
-          responseType: 'text'
-          timeout: Config.RELAY_AJAX_TIMEOUT
-          disableUploadProgress: true # https://github.com/nathanboktae/q-xhr/issues/12
-        .then (response)->
-          response.data
     # Zepto; https://github.com/madrobby/zepto
     # Note: broken Promises - will not catch exceptions in .then/.done
     else if $?.ajax && $?.Deferred
@@ -119,12 +97,6 @@ class Utils
           new Promise(resolver)
         all: (arr)->
           Promise.all(arr)
-    else if Q?
-      @setPromiseImpl
-        promise: (resolver)->
-          Q.promise(resolver)
-        all: (arr)->
-          Q.all(arr)
     else
       throw new Error('Unable to set default Promise implementation.')
 
@@ -170,15 +142,6 @@ class Utils
         return @firstZeroBits(a, rmd)
     return false
 
-  # Prints a current stack trace to the console
-  @logStack: (err) ->
-    err = new Error('stackLog') unless err
-    s = err.stack.replace(/^[^\(]+?[\n$]/gm, '')
-    .replace(/^\s+at\s+/gm, '')
-    .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@')
-    .split('\n')
-    console.log "#{i}: #{sl}" for sl, i in s
-
   # Create a resolved Promise
   @resolve: (value)->
     @getPromiseImpl().promise (res, rej)-> res(value)
@@ -204,16 +167,6 @@ class Utils
         return res if res
         iter(arr[++i]) if i < arr.length
     iter(arr[++i])
-
-  # increment byte coutner like a number
-  # from the least to the most significant bit.
-  @incrementByteCounter: (counter)->
-    for b, i in counter by - 1
-      if b == 255
-        counter[i] = 0
-      else
-        counter[i]++
-        return
 
   # Ensure every argument is truish
   @ENSURE_ERROR_MSG = 'invalid arguments'
