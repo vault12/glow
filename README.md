@@ -17,7 +17,7 @@ The built version of Glow will be available in `dist` subdirectory, along with t
 
 ## Running the tests
 By default, the unit tests connect to known [Zax](https://github.com/vault12/zax) Cryptographic Relay Servers.
-You may change this by modifying the code in [tests/helper.coffee#L57](tests/helper.coffee#L57)
+You may change this by modifying the code in [tests/helper.coffee#L42](tests/helper.coffee#L42)
 
 ```CoffeeScript
 host: 'https://z.vault12.com'
