@@ -9,26 +9,30 @@ MailBox = require 'mailbox'
 Nacl    = require 'nacl'
 Relay   = require 'relay'
 
-max_test = 50
+max_test = 20
 # Assuming 500ms roundtrip, increase for remote relays
 timeout = max_test * window.__globalTest.timeouts.tiny
 
 describe 'ZAX Race Conditions', ->
   return unless window.__globalTest.runTests['relay race']
+  @slow(window.__globalTest.slow)
+  @timeout(timeout)
+
+  before ->
+    @skip() if __globalTest.offline
+
   # Enable this test for multi-tab race condition testing. When run by itself,
   # it doesn't provide any value, since it will simply upload and delete
   # messages from the same mailbox. When run from multiple browsers against the
   # same relay, it will force a well-known relay mailbox into a race condition.
-  return done() if __globalTest.offline
   r = new Relay(__globalTest.host)
-  @timeout(timeout)
 
   mbx = []
   target = null
   # create test mailboxes
 
-  it 'create mailboxes', (done)->
-    handle done, Utils.all [0...max_test].map (i)->
+  it 'create mailboxes', ->
+    Utils.all [0...max_test].map (i)->
       MailBox.new("mbx_09_#{i}").then (m)->
         mbx.push(m)
     .then ->
@@ -39,22 +43,20 @@ describe 'ZAX Race Conditions', ->
         for i in [0...max_test]
           tasks.push mbx[i].keyRing.addGuest('target', target.getPubCommKey())
           tasks.push target.keyRing.addGuest("guest#{i}", mbx[i].getPubCommKey())
-        Utils.all(tasks).then ->
-          done()
+        Utils.all(tasks)
 
   # send some test messages and get a few back
   window.__globalTest.idx901 = 0
   for k in [0...max_test]
-    it "test #{k}", (done)->
+    it "test #{k}", ->
       i = window.__globalTest.idx901++
-      handle done, mbx[i].sendToVia('target', r, "test msg #{i}=>msg0").then ->
+      mbx[i].sendToVia('target', r, "test msg #{i}=>msg0").then ->
         mbx[i].relaySend('target', "test msg #{i}=>msg1", r).then ->
-          mbx[i].relaySend('target', "test msg #{i}=>msg2", r).then ->
-            done()
+          mbx[i].relaySend('target', "test msg #{i}=>msg2", r)
 
   # get the last messages back
-  it 'download', (done)->
-    handle done, target.getRelayMessages(r).then (download)->
+  it 'download', ->
+    target.getRelayMessages(r).then (download)->
       ld = download
       if ld.length > 0
         expect(ld[0].msg).to.include 'test msg' if ld[0].msg
@@ -71,14 +73,11 @@ describe 'ZAX Race Conditions', ->
               if count > 0
                 console.log "messages left: #{count}"
                 Utils.delay 1, deleteBatch
-              else
-                done()
 
       deleteBatch()
 
-  it 'cleanup', (done)->
+  it 'cleanup', ->
     tasks = []
     for i in [0...max_test]
       tasks.push mbx[i].selfDestruct(true)
-    handle done, Utils.all(tasks).then ->
-      done()
+    Utils.all(tasks)

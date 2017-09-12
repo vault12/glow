@@ -19,6 +19,12 @@ class Config
   # 5 sec - Ajax request timeout
   @RELAY_AJAX_TIMEOUT: 5 * 1000
 
+  # Restart session and retry relay requests several times
+  @RELAY_RETRY_REQUEST_ATTEMPTS: 15
+
+  # 60 min - Block relay for this interval when several requests fail in a row
+  @RELAY_BLOCKING_TIME: 60 * 60 * 1000
+
 module.exports = Config
 
 # Put all libs into global namespace for console access

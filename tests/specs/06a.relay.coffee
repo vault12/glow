@@ -10,57 +10,51 @@ Relay   = require 'relay'
 
 describe 'Relay Ops, wrapper API', ->
   return unless window.__globalTest.runTests['relay wrapper']
+  @slow(window.__globalTest.slow)
   @timeout(window.__globalTest.timeouts.tiny)
 
+  before ->
+    @skip() if __globalTest.offline
+
   [Alice, Bob] = [null, null]
-  it 'create mailboxes', (done)->
-    handle done, MailBox.new('Alice').then (ret)->
+  it 'create mailboxes', ->
+    MailBox.new('Alice').then (ret)->
       Alice = ret
       MailBox.new('Bob').then (ret)->
         Bob = ret
         Alice.keyRing.addGuest('Bob', Bob.getPubCommKey()).then ->
-          Bob.keyRing.addGuest('Alice', Alice.getPubCommKey()).then ->
-            done()
+          Bob.keyRing.addGuest('Alice', Alice.getPubCommKey())
 
-  it 'upload message to mailbox :hpk', (done) ->
-    return done() if __globalTest.offline
+  it 'upload message to mailbox :hpk', ->
     r = new Relay(__globalTest.host)
-    handle done, Alice.sendToVia('Bob', r, 'Hi Bob from Alice 202').then (msg) ->
+    Alice.sendToVia('Bob', r, 'Hi Bob from Alice 202').then (msg) ->
       window.__globalTest.bob_nonce2 = msg.payload.nonce
       window.__globalTest.alice_storage_token = msg.storage_token
-      done()
 
-  it 'check uploaded message status', (done) ->
-    return done() if __globalTest.offline
+  it 'check uploaded message status', ->
     r = new Relay(__globalTest.host)
     st = window.__globalTest.alice_storage_token
-    handle done, Alice.connectToRelay(r).then ->
+    Alice.connectToRelay(r).then ->
       Alice.relay_msg_status(r,st).then (ttl)->
         expect(ttl).above 0
-        done()
 
-  it 'count Bob mailbox', (done) ->
-    return done() if __globalTest.offline
+  it 'count Bob mailbox', ->
     r = new Relay(__globalTest.host)
-    handle done, Bob.connectToRelay(r).then ->
+    Bob.connectToRelay(r).then ->
       r.count(Bob).then (count)->
         expect(count).equal 1
-        done()
 
-  it 'download Bob mailbox', (done) ->
-    return done() if __globalTest.offline
+  it 'download Bob mailbox', ->
     r = new Relay(__globalTest.host)
-    handle done, Bob.connectToRelay(r).then ->
+    Bob.connectToRelay(r).then ->
       r.download(Bob).then (result)->
         d = result[0]
         Bob.decodeMessage('Alice', d['nonce'], d['data']).then (msg)->
           expect(msg).equal 'Hi Bob from Alice 202'
-          done()
 
-  it 'delete from Bob mailbox', (done) ->
-    return done() if __globalTest.offline
+  it 'delete from Bob mailbox', ->
     r = new Relay(__globalTest.host)
-    handle done, Bob.connectToRelay(r).then ->
+    Bob.connectToRelay(r).then ->
       # not deleted anything
       r.delete(Bob, []).then ->
         r.count(Bob).then (count)->
@@ -71,18 +65,14 @@ describe 'Relay Ops, wrapper API', ->
             expect(result).equal 0
             r.count(Bob).then (count)->
               expect(count).equal 0
-              done()
 
-  it 'check deleted message status', (done) ->
-    return done() if __globalTest.offline
+  it 'check deleted message status', ->
     r = new Relay(__globalTest.host)
     st = window.__globalTest.alice_storage_token
-    handle done, Alice.connectToRelay(r).then ->
-      r.message_status(Alice,st).then (ttl)->
+    Alice.connectToRelay(r).then ->
+      r.messageStatus(Alice,st).then (ttl)->
         expect(ttl).equal -2  # message is now deleted
-        done()
 
-  it 'clear mailboxes', (done) ->
-    handle done, Alice.selfDestruct(true).then ->
-      Bob.selfDestruct(true).then ->
-        done()
+  it 'clear mailboxes', ->
+    Alice.selfDestruct(true).then ->
+      Bob.selfDestruct(true)

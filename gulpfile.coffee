@@ -54,10 +54,10 @@ build = (dist) ->
       doEmitWarnings: false
     b.transform coffeeify
     b = b.bundle()
-    b = b.pipe source entry[1]
     .on 'error', ->
       # report CoffeeScript errors in console and continue build 
       this.emit 'end'
+    b = b.pipe source entry[1]
     b = b.pipe buffer()
 
     # comment out this to turn off source maps
@@ -102,12 +102,14 @@ gulp.task 'watch', ['build'], ->
 
 # run tests in headless browser
 gulp.task 'test', ['build'], ->
-  phantom = spawn('./node_modules/mocha-phantomjs-core/phantomjs', [
+  test = if process.env.TRAVIS then '.travis.html' else 'index.html'
+
+  phantom = spawn('node_modules/phantomjs-prebuilt/bin/phantomjs', [
     # allow headless browser to connect via HTTPS
     '--ignore-ssl-errors=yes'
     '--web-security=no'
     'node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js'
-    'index.html'
+    test
     # Mocha reporter
     'spec'
     '{"useColors": true}'

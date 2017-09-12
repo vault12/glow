@@ -11,57 +11,53 @@ Utils   = require 'utils'
 
 describe 'Relay Bulk Ops', ->
   return unless window.__globalTest.runTests['relay bulk']
+  @slow(window.__globalTest.slow)
   @timeout(window.__globalTest.timeouts.mid)
 
+  before ->
+    @skip() if __globalTest.offline
+
   [Alice, Bob] = [null, null]
-  it 'create mailboxes', (done)->
-    handle done, MailBox.new('Alice').then (ret)->
+  it 'create mailboxes', ->
+    MailBox.new('Alice').then (ret)->
       Alice = ret
       MailBox.new('Bob').then (ret)->
         Bob = ret
         Alice.keyRing.addGuest('Bob', Bob.getPubCommKey()).then ->
-          Bob.keyRing.addGuest('Alice', Alice.getPubCommKey()).then ->
-            done()
+          Bob.keyRing.addGuest('Alice', Alice.getPubCommKey())
 
   code1 = {id: 1, code: 12345, msg: 'Missile code #1 is 12345'}
   code2 = {id: 2, code: 67890, msg: 'Missile code #2 is 67890'}
   code3 = {id: 3, code: 11111, msg: 'Missile code #3 is 11111'}
 
-  it 'Give missile codes to Bob', (done)->
-    return done() if __globalTest.offline
+  it 'Give missile codes to Bob', ->
     r = new Relay(__globalTest.host)
-    handle done, Alice.sendToVia('Bob', r, code1).then ->
+    Alice.sendToVia('Bob', r, code1).then ->
       Alice.relaySend('Bob', code2, r).then ->
         Alice.relaySend('Bob', code3, r).then ->
           Bob.connectToRelay(r).then ->
             Bob.relayCount(r).then (count)->
               expect(count).equal 3
-              done()
 
   download = null
-  it 'Bob gets missile codes', (done)->
-    return done() if __globalTest.offline
+  it 'Bob gets missile codes', ->
     r = new Relay(__globalTest.host)
-    handle done, Bob.getRelayMessages(r).then (_download)->
+    Bob.getRelayMessages(r).then (_download)->
       download = _download
-      expect(download).length.is 3
-      msgs = Utils.map download, (m) -> m.msg
+      expect(download).to.have.a.lengthOf 3
+      msgs = download.map (m) -> m.msg
       expect(msgs).deep.equal [code1, code2, code3]
-      done()
 
-  it 'Bob erases his tracks', (done)->
-    return done() if __globalTest.offline
+  it 'Bob erases his tracks', ->
     r = new Relay(__globalTest.host)
-    list = Utils.map download, (i) -> i.nonce
-    handle done, Bob.connectToRelay(r).then ->
+    list = download.map (i) -> i.nonce
+    Bob.connectToRelay(r).then ->
       Bob.relayCount(r).then (count)->
         expect(count).equal 3
         Bob.relayDelete(list, r).then ->
           Bob.relayCount(r).then (count)->
             expect(count).equal 0
-            done()
 
-  it 'clear mailboxes', (done)->
-    handle done, Alice.selfDestruct(true).then ->
-      Bob.selfDestruct(true).then ->
-        done()
+  it 'clear mailboxes', ->
+    Alice.selfDestruct(true).then ->
+      Bob.selfDestruct(true)

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="node_modules/es6-promise-polyfill/promise.min.js"></script>
+  <script src="node_modules/axios/dist/axios.js"></script>
+  <script src="node_modules/js-nacl/lib/nacl_factory.js"></script>
+  <script src="node_modules/mocha/mocha.js"></script>
+  <script>
+    window.__isTravis = true;
+    mocha.setup('bdd');
+    window.onload = function() { mocha.run(); }
+  </script>
+  <script src="build/tests.js"></script>
+</head>
+</html>

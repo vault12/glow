@@ -19,18 +19,21 @@ describe 'Ratchet With Noise', ->
   # For now it runs standard ratchet test sending
   # messages between random mailboxes
 
+  @slow(window.__globalTest.slow)
   @timeout(window.__globalTest.timeouts.long)
 
-  return done() if __globalTest.offline
+  before ->
+    @skip() if __globalTest.offline
+
   r = new Relay(__globalTest.host)
 
-  max_test = 20
+  max_test = 10
   max_guest = 3
 
   mbx = []
   # create test mailboxes
-  it 'create ratchets', (done)->
-    handle done, Utils.all [0...max_test].map (i)->
+  it 'create ratchets', ->
+    Utils.all [0...max_test].map (i)->
       RatchetBox.new("mbx_11_#{i}").then (m)->
         mbx.push(m)
     .then ->
@@ -47,17 +50,15 @@ describe 'Ratchet With Noise', ->
             k++ while (d = seq(i + j + seed + k)) is i
             tasks.push mbx[i].keyRing.addGuest("guest#{j}", mbx[d].getPubCommKey())
             tasks.push mbx[d].keyRing.addGuest("guest#{max_guest + j}", mbx[i].getPubCommKey())
-        Utils.all(tasks).then ->
-          done()
+        Utils.all(tasks)
 
   # send test messages and get a few back
   window.__globalTest.idx111 = 0
   for v in [0...max_guest]
     for k in [0...max_test]
-      it "test #{k}", (done)->
-        return done() if __globalTest.offline
+      it "test #{k}", ->
         i = window.__globalTest.idx111++ % max_test
-        handle done, Nacl.random(1).then (rnd)->
+        Nacl.random(1).then (rnd)->
           j = rnd[0] % max_guest
           hpk_from = mbx[i].hpk()
           mbx[i]._gHpk("guest#{j}").then (gHpk)->
@@ -67,18 +68,15 @@ describe 'Ratchet With Noise', ->
                 if download.length > 0
                   for m in download
                     expect(m.msg).to.contain "ratchet" if m.msg?
-                done()
 
   # get last messages back
   window.__globalTest.idx112 = 0
   for k in [0...max_test]
-    it "download #{k}", (done)->
-      return done() if __globalTest.offline
+    it "download #{k}", ->
       i = window.__globalTest.idx112++
-      handle done, mbx[i].getRelayMessages(r).then (download)->
+      mbx[i].getRelayMessages(r).then (download)->
         l = mbx[i].relayNonceList(download)
-        mbx[i].relayDelete(l, r).then ->
-          done()
+        mbx[i].relayDelete(l, r)
 
   # delete mailboxes after delay to
   # let previous requests complete
@@ -86,7 +84,6 @@ describe 'Ratchet With Noise', ->
   window.__globalTest.idx114 = 0
   for k in [0...max_test]
     j = window.__globalTest.idx113++
-    it "cleanup #{j}", (done)->
+    it "cleanup #{j}", ->
       i = window.__globalTest.idx114++
-      handle done, mbx[i].selfDestruct(true, true).then ->
-        done()
+      mbx[i].selfDestruct(true, true)

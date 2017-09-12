@@ -12,9 +12,9 @@ describe 'NACL', ->
   return unless window.__globalTest.runTests['nacl']
 
   unless window.__globalTest.naclWorker
-    it 'factory load/unload', (done)->
+    it 'factory load/unload', ->
       jsnacl = Nacl.use()
-      handle done, Nacl.makeSecretKey().then ->
+      Nacl.makeSecretKey().then ->
         expect(jsnacl._instance).not.null
         setTimeout( ->
           s = if jsnacl._instance then 'OK!' else 'FAIL!'
@@ -22,11 +22,10 @@ describe 'NACL', ->
         setTimeout( ->
           s = if jsnacl._instance then 'FAIL!' else 'OK!'
         , 20 * 1000)
-        done()
 
-  it 'Hash₂ of utf8 strings', (done)->
+  it 'Hash₂ of utf8 strings', ->
     str = 'hello world | В военное время значение π достигало 4ех'
-    handle done, Nacl.h2(str).then (hash1)->
+    Nacl.h2(str).then (hash1)->
       hash1str = hash1.fromCharCodes()
       expect(hash1).not.null
       expect(hash1).not.equal(str)
@@ -42,7 +41,6 @@ describe 'NACL', ->
         str3 = 'hello world ' + '|' + ' В военное время значение π достигало 4ех'
         Nacl.h2(str3).then (hash3)->
           expect(hash3.fromCharCodes()).equal(hash1str)
-          done()
 
   it 'Concat Strings', ->
     str4 = "apple pie | яблочный пирог"
@@ -51,18 +49,17 @@ describe 'NACL', ->
     expect(str6.length).equal(54)
     expect(str6).equal "apple pie | яблочный пирогpeach pie | персиковый пирог"
 
-  it 'Concat strings', (done)->
-    handle done, Nacl.random(32).then (aUint8Array1)->
+  it 'Concat strings', ->
+    Nacl.random(32).then (aUint8Array1)->
       Nacl.to_hex(aUint8Array1).then (str7)->
         Nacl.random(32).then (aUint8Array2)->
           Nacl.to_hex(aUint8Array2).then (str8)->
             str9 = str7 + str8
             expect(str9.length).equal(128)
             expect(str9).equal str7.concat str8
-            done()
 
-  it 'Concat arrays', (done)->
-    handle done, Nacl.random(32).then (a1)->
+  it 'Concat arrays', ->
+    Nacl.random(32).then (a1)->
       Nacl.random(32).then (a2)->
         a3 = a1.concat a2
         expect(a3.length).equal(64)
@@ -74,10 +71,9 @@ describe 'NACL', ->
 
         Nacl.h2(a3).then (h2)->
           expect(h2.length).equal(32)
-          done()
 
-  it 'Concat H2 Nacl Strings', (done)->
-    handle done, Nacl.h2('123').then (str1)->
+  it 'Concat H2 Nacl Strings', ->
+    Nacl.h2('123').then (str1)->
       Nacl.h2('124').then (str2)->
         expect(str1.length).equal(32)
         expect(str2.length).equal(32)
@@ -85,7 +81,6 @@ describe 'NACL', ->
         expect(str.length).equal(64)
         Nacl.h2(str).then (h2)->
           expect(h2.length).equal(32)
-          done()
 
 # ----- Keys -----
 describe 'Keys', ->
@@ -94,8 +89,8 @@ describe 'Keys', ->
   k1 = null
   k2 = null
 
-  it 'create key', (done)->
-    handle done, Nacl.makeSecretKey().then (_k1)->
+  it 'create key', ->
+    Nacl.makeSecretKey().then (_k1)->
       k1 = _k1
       Nacl.makeKeyPair().then (_k2)->
         k2 = _k2
@@ -105,7 +100,6 @@ describe 'Keys', ->
         expect(k1.key).not.be.empty
         expect(k2).to.have.property 'boxPk'
         expect(k2).to.have.property 'boxSk'
-        done()
 
   it 'convert keys', ->
     k = k1
@@ -116,19 +110,17 @@ describe 'Keys', ->
     for b, i in k.key
       expect(b).equal(kc.key[i])
 
-  it 'Keypair conversions', (done)->
-    handle done, Nacl.use().crypto_box_keypair().then (_kp)->
+  it 'Keypair conversions', ->
+    Nacl.use().crypto_box_keypair().then (_kp)->
       kp = new Keys(_kp)
       kps = Keys.keys2str(kp)
       kp2 = Keys.str2keys(kps)
       kp.should.deep.equal(kp2)
-      done()
 
-  it 'Recover secret key', (done)->
-    handle done, Nacl.makeKeyPair().then (k)->
+  it 'Recover secret key', ->
+    Nacl.makeKeyPair().then (k)->
       readable_str = k.strSecKey()
 
       # recover key
       Nacl.fromSecretKey(readable_str.fromBase64()).then (k2)->
         expect(k2).deep.equal k
-        done()

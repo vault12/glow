@@ -29,32 +29,38 @@
 
   api = {
     init: function(e) {
-      var js_nacl;
       importScripts(e.data.naclPath);
-      js_nacl = nacl_factory.instantiate(e.data.heapSize);
-      e.data.api.forEach(function(f) {
-        api[f] = function(e) {
-          try {
-            if (self.rnd_queue && e.data.rnd) {
-              self.rnd_queue.push(e.data.rnd);
-            }
-            self.postMessage({
-              cmd: f,
-              res: js_nacl[f].apply(js_nacl, e.data.args)
-            });
-          } catch (error) {
-            e = error;
-            self.postMessage({
-              cmd: f,
-              error: true,
-              message: e.stack || e.message || e
-            });
-          }
+      nacl_factory.instantiate((function(_this) {
+        return function(new_nacl) {
+          var js_nacl;
+          js_nacl = new_nacl;
+          e.data.api.forEach(function(f) {
+            return api[f] = function(e) {
+              try {
+                if (self.rnd_queue && e.data.rnd) {
+                  self.rnd_queue.push(e.data.rnd);
+                }
+                return self.postMessage({
+                  cmd: f,
+                  res: js_nacl[f].apply(js_nacl, e.data.args)
+                });
+              } catch (error) {
+                e = error;
+                return self.postMessage({
+                  cmd: f,
+                  error: true,
+                  message: e.stack || e.message || e
+                });
+              }
+            };
+          });
+          return self.postMessage({
+            cmd: 'init',
+            hasCrypto: hasCrypto
+          });
         };
-      });
-      self.postMessage({
-        cmd: 'init',
-        hasCrypto: hasCrypto
+      })(this), {
+        requested_total_memory: e.data.heapSize
       });
     }
   };

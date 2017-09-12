@@ -1,6 +1,6 @@
 {
   "name": "theglow",
-  "version": "3.0.3",
+  "version": "4.0.0",
   "description": "Client library for interacting with Zax Cryptographic Relay Servers.",
   "author": "Vault12 <glow@vault12.com>",
   "repository": {
@@ -27,27 +27,27 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "axios": "^0.12.0",
-    "browser-sync": "^2.10.0",
-    "browserify": "^12.0.1",
+    "axios": "^0.16.2",
+    "browser-sync": "^2.18.13",
+    "browserify": "^14.4.0",
     "browserify-coffeelint": "^1.2.0",
-    "chai": "^3.4.1",
-    "chai-as-promised": "^5.1.0",
+    "chai": "^4.1.1",
     "coffee-script": "^1.12.0",
     "coffeeify": "^2.1.0",
+    "es6-promise-polyfill": "^1.2.0",
     "event-stream": "^3.3.2",
     "exorcist": "^0.4.0",
-    "glob": "^6.0.1",
+    "glob": "^7.1.2",
     "gulp": "^3.9.0",
     "gulp-coffee": "^2.3.3",
-    "gulp-coffeelint": "^0.5.0",
+    "gulp-coffeelint": "^0.6.0",
     "gulp-rename": "^1.2.2",
     "gulp-rimraf": "^0.2.0",
-    "gulp-uglify": "^1.5.1",
-    "mocha": "^2.3.4",
-    "mocha-phantomjs-core": "2.1.0",
-    "promise-polyfill": "^6.0.2",
-    "source-map-support": "^0.3.3",
+    "gulp-uglify": "^3.0.0",
+    "mocha": "^3.5.0",
+    "mocha-phantomjs-core": "^2.1.0",
+    "phantomjs-prebuilt": "^2.1.15",
+    "source-map-support": "^0.4.17",
     "subarg": "^1.0.0",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
@@ -55,7 +55,7 @@
     "zepto": "^1.2.0"
   },
   "dependencies": {
-    "js-nacl": "^0.6.0"
+    "js-nacl": "^1.2.2"
   },
   "engines": {
     "node": ">=0.4.0"
