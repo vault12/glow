@@ -56,13 +56,14 @@ describe 'MailBox, offline Relay', ->
     MailBox.fromSeed('hello').then (m)->
       pk = m.keyRing.getPubCommKey()
       pk.should.equal '2DM+z1PaxGXVnzsDh4zv+IlH7sV8llEFoEmg9fG3pRA='
-      m.keyRing.hpk.should.deep.equal new Uint8Array([255, 29, 75, 250, 114, 23, 77,
-        198, 215, 184, 25, 211, 126, 152, 31, 82, 236, 188, 237, 35, 204, 66,
-        209, 107, 162, 211, 241, 170, 1, 60, 236, 221])
+      m.keyRing.hpk.should.deep.equal new Uint8Array([249, 209, 90, 99, 252, 44, 187,
+        27, 13, 101, 229, 199, 235, 31, 235, 119, 224, 25, 207,
+        215, 94, 130, 71, 230, 44, 22, 217, 0, 201, 41, 61, 222])
       m.selfDestruct(true)
 
   H2_KEY = 'vye4sj8BKHopBVXUfv3s3iKyP6TyNoJnHUYWCMcjwTo='
-  H2_HPK = new Uint8Array([9, 78, 219, 218, 145, 88, 23, 117, 122, 235, 219, 132, 206, 98, 130, 28, 221, 116, 161, 97, 67, 177, 45, 242, 44, 19, 9, 75, 194, 238, 22, 223])
+  H2_HPK = new Uint8Array([36, 36, 36, 231, 132, 114, 39, 6, 230, 153, 228, 128, 132,
+    215, 100, 241, 87, 187, 9, 53, 179, 248, 176, 242, 249, 101, 68, 48, 48, 9, 219, 211])
   it 'Mailbox backup & restore', ->
     MailBox.fromSeed('hello2').then (m)->
       pk = m.keyRing.getPubCommKey()
