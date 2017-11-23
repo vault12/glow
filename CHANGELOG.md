@@ -1,3 +1,9 @@
+### v4.1.0
+
+* Add CLI glow utility
+* Use hash function with 64 bytes 0-pad
+* Fix double JSON encoding/decoding for some commands
+
 ### v4.0.0
 
 * Add commands and tests for file API

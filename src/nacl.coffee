@@ -100,15 +100,15 @@ class Nacl
   @decode_utf8: (data)->
     @use().decode_utf8(data)
 
-  # h2(m) = sha256(sha256(32x0 + m))
+  # h2(m) = sha256(sha256(64x0 + m))
   # Zero out initial sha256 block, and double hash 0-padded message
   # http://cs.nyu.edu/~dodis/ps/h-of-h.pdf
   # Returns a Promise
   @h2: (str)->
     str = str.toUint8ArrayRaw() if Utils.type(str) is 'String'
-    tmp = new Uint8Array(32 + str.length)
+    tmp = new Uint8Array(64 + str.length)
     tmp.fillWith 0
-    tmp.set(str, 32)
+    tmp.set(str, 64)
     @sha256(tmp).then (sha)=>
       @sha256(sha)
 

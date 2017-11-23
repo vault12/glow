@@ -242,6 +242,7 @@ class MailBox extends EventEmitter
             emsg = JSON.parse emsg.data
             @decodeMessage(tag, emsg.nonce, emsg.ctext).then (msg)=>
               msg.uploadID = emsg.uploadID
+              msg.nonce = emsg.nonce
               msg
           else
             @decodeMessage(tag, emsg.nonce, emsg.data).then (msg)=>

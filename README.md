@@ -15,6 +15,24 @@ npm install theglow
 ```
 The built version of Glow will be available in `dist` subdirectory, along with the minified copy.
 
+## CLI
+Glow supports command line interface. Available commands:
+
+```
+glow download [options] relay_url guest_public_key
+  Options:
+    -c, --count                  show number of messages without downloading them
+    -d, --directory <directory>  directory to write downloaded file
+    -f, --file <file>            file name to use instead of the original one
+    -i, --interactive            interactive mode
+    -k, --key                    set private key
+    -n, --number <number>        max. number of files to download ("all" to download all)
+    -p, --public                 show public key
+    --silent                     silent mode
+    --stdout                     stream output to stdout
+    -h, --help                   output usage information
+```
+
 ## Running the tests
 By default, the unit tests connect to known [Zax](https://github.com/vault12/zax) Cryptographic Relay Servers.
 You may change this by modifying the code in [tests/helper.coffee#L42](tests/helper.coffee#L42)

@@ -1,6 +1,6 @@
 {
   "name": "theglow",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Client library for interacting with Zax Cryptographic Relay Servers.",
   "author": "Vault12 <glow@vault12.com>",
   "repository": {
@@ -20,21 +20,23 @@
   "directories": {},
   "main": "dist/theglow.js",
   "files": [
+    "bin/",
     "dist/theglow.js",
     "dist/theglow.js.map",
     "dist/theglow.min.js",
     "dist/js_nacl_worker.js"
   ],
+  "bin": {
+    "glow": "bin/glow.js"
+  },
   "license": "MIT",
   "devDependencies": {
-    "axios": "^0.16.2",
     "browser-sync": "^2.18.13",
     "browserify": "^14.4.0",
     "browserify-coffeelint": "^1.2.0",
     "chai": "^4.1.1",
     "coffee-script": "^1.12.0",
     "coffeeify": "^2.1.0",
-    "es6-promise-polyfill": "^1.2.0",
     "event-stream": "^3.3.2",
     "exorcist": "^0.4.0",
     "glob": "^7.1.2",
@@ -46,7 +48,6 @@
     "gulp-uglify": "^3.0.0",
     "mocha": "^3.5.0",
     "mocha-phantomjs-core": "^2.1.0",
-    "phantomjs-prebuilt": "^2.1.15",
     "source-map-support": "^0.4.17",
     "subarg": "^1.0.0",
     "vinyl-buffer": "^1.0.0",
@@ -55,7 +56,16 @@
     "zepto": "^1.2.0"
   },
   "dependencies": {
-    "js-nacl": "^1.2.2"
+    "axios": "^0.16.2",
+    "chalk": "^2.3.0",
+    "co": "^4.6.0",
+    "co-prompt": "^1.0.0",
+    "commander": "^2.11.0",
+    "es6-promise-polyfill": "^1.2.0",
+    "get-stdin": "^5.0.1",
+    "js-nacl": "^1.2.2",
+    "phantomjs-prebuilt": "^2.1.15",
+    "preferences": "^1.0.1"
   },
   "engines": {
     "node": ">=0.4.0"

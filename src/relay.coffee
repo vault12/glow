@@ -125,7 +125,7 @@ class Relay extends EventEmitter
     data =
       cmd: cmd
     data = Utils.extend(data, params) if params
-    
+
     @_request('command', mbx, data).then (d)=>
       # no data in the response; return msg obj for tests.nonce
       throw new Error("#{@url} - #{cmd} error") unless d?
@@ -228,7 +228,6 @@ class Relay extends EventEmitter
       nonce = datain[0]
       ctext = datain[1]
       return mbx.decodeMessage(@relayId(), nonce, ctext, true).then (response)=>
-        response = JSON.parse(response)
         response.ctext = datain[2]
         response
 
@@ -237,12 +236,7 @@ class Relay extends EventEmitter
       throw new Error("#{@url} - #{cmd}: Bad response")
     nonce = datain[0]
     ctext = datain[1]
-    
-    if cmd in ['startFileUpload', 'fileStatus', 'uploadFileChunk', 'deleteFile']
-      mbx.decodeMessage(@relayId(), nonce, ctext, true).then (response)=>
-        JSON.parse(response)
-    else
-      mbx.decodeMessage(@relayId(), nonce, ctext, true)
+    return mbx.decodeMessage(@relayId(), nonce, ctext, true)
 
   # Synchronous
   _processData: (d)->
