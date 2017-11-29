@@ -18,7 +18,7 @@ The built version of Glow will be available in `dist` subdirectory, along with t
 NOTE: if you're going to use Glow in CLI mode, consider installing it globally: `npm install -g theglow`.
 
 ## Command-line interface
-To see commands that Glow utility provides, type in the terminal `bin/glow.js` (or just `glow` if you've installed it globally).
+To see commands that Glow utility provides, type in the terminal `./bin/glow.js` (or just `glow` if you've installed it globally).
 Currently supported commands are:
 
 ```
