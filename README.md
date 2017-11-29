@@ -5,7 +5,7 @@ Glow is a reference client library for interacting with [Zax](https://github.com
 Glow 4.0 introduces support for Zax 2.0 [file exchange api](https://github.com/vault12/zax/wiki/Zax-2.0-File-Commands). Full documentation is avaiable [here](https://github.com/vault12/zax/blob/master/README.md)
 
 ## Test Dashboard
- Glow powers a test [Dashboard](https://github.com/vault12/zax-dash) app to provide user-friendly access point to given relay internal mailboxes. We maintain live [Test Server](https://z.vault12.com) that runs our latest build. For testing purposes expiration on that relay is set for 30 minutes.
+ Glow powers a test [Dashboard](https://github.com/vault12/zax-dash) app to provide user-friendly access point to given relay internal mailboxes. We maintain live [Test Server](https://zax-test.vault12.com) that runs our latest build. For testing purposes expiration on that relay is set for 30 minutes.
 
 ## Installation
 Glow can be easily installed via `npm`, which is included when you install [Node.js](https://nodejs.org/).
@@ -15,30 +15,28 @@ npm install theglow
 ```
 The built version of Glow will be available in `dist` subdirectory, along with the minified copy.
 
-## CLI
-Glow supports command line interface. Available commands:
+NOTE: if you're going to use Glow in CLI mode, consider installing it globally: `npm install -g theglow`.
+
+## Command-line interface
+To see commands that Glow utility provides, type in the terminal `./bin/glow.js` (or just `glow` if you've installed it globally).
+Currently supported commands are:
 
 ```
-glow download [options] relay_url guest_public_key
-  Options:
-    -c, --count                  show number of messages without downloading them
-    -d, --directory <directory>  directory to write downloaded file
-    -f, --file <file>            file name to use instead of the original one
-    -i, --interactive            interactive mode
-    -k, --key                    set private key
-    -n, --number <number>        max. number of files to download ("all" to download all)
-    -p, --public                 show public key
-    --silent                     silent mode
-    --stdout                     stream output to stdout
-    -h, --help                   output usage information
+glow clean <relay_url> <guest_public_key>                delete all files in mailbox on the relay
+glow count <relay_url> <guest_public_key> [options]      show number of pending files on the relay
+glow download <relay_url> <guest_public_key> [options]   download file(s) from the relay
+glow key [options]                                       show public key or h2(pk), set/update private key
+glow help [cmd]                                          display help for [cmd]
 ```
+
+Use `glow help [cmd]` to learn more about supported options for each command. Note that private key must be set with `glow key` prior to any relay requests.
 
 ## Running the tests
-By default, the unit tests connect to known [Zax](https://github.com/vault12/zax) Cryptographic Relay Servers.
-You may change this by modifying the code in [tests/helper.coffee#L42](tests/helper.coffee#L42)
+By default, unit tests connect to a local [Zax](https://github.com/vault12/zax) Cryptographic Relay Server on `http://localhost:8080`.
+You may also run tests on our maintained test server by modifying the code in [tests/helper.coffee#L37](tests/helper.coffee#L37), or set your own remote relay URL in [tests/helper.coffee#L42](tests/helper.coffee#L42):
 
 ```CoffeeScript
-host: 'https://z.vault12.com'
+host: 'https://zax-test.vault12.com'
 ```
 To create a build and run the tests, navigate to the glow directory and type the following in a terminal:
 
@@ -79,7 +77,7 @@ node_modules/gulp/bin/gulp.js dist
 This will create the appropriate files in the following directory: `dist`
 
 ## Demo
-To see Glow and Zax in action, check out the [Live Demo](https://z.vault12.com). This is a test project included in Zax called [Zax-Dash](https://github.com/vault12/zax-dash).
+To see Glow and Zax in action, check out the [Live Demo](https://zax-test.vault12.com). This is a test project included in Zax called [Zax-Dash](https://github.com/vault12/zax-dash).
 
 ## Contributing
 We encourage you to contribute to Glow using [pull requests](https://github.com/vault12/glow/pulls)! Please check out the [Contributing to Glow Guide](CONTRIBUTING.md) for guidelines about how to proceed.
