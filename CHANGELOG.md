@@ -1,3 +1,10 @@
+### v4.1.1
+
+* Change CLI commands syntax
+* Add `clean` CLI command
+* Add `key --generate` CLI command
+* Minor fixes & enhancements
+
 ### v4.1.0
 
 * Add CLI glow utility

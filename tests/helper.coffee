@@ -39,7 +39,7 @@ if not window.__globalTest
   if remoteTest or window.__isTravis
     # remote testing
     window.__globalTest =
-      host: 'https://z.vault12.com'
+      host: 'https://zax-test.vault12.com'
       offline: false
       slow: 5000
       timeouts:
