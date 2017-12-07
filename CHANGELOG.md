@@ -1,3 +1,8 @@
+### v4.1.2
+
+* Delete actual files from relay with `clean` CLI command, not just metadata
+* Better `download --directory` CLI command: relative and absolute paths, create directory if it doesn't exist, check if it's writable
+
 ### v4.1.1
 
 * Change CLI commands syntax
