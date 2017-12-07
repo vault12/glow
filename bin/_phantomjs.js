@@ -5,6 +5,23 @@ var fs = require('fs');
 var command = system.args[1];
 var params = JSON.parse(system.args[2]);
 
+// Create directory if it doesn't exist, and convert it to absolute path
+if (command === 'download' && params.directory) {
+  if (params.directory.substr(-1) != fs.separator) {
+    params.directory += fs.separator;
+  }
+  if (!fs.isAbsolute(params.directory)) {
+    params.directory = fs.workingDirectory + fs.separator + params.directory;
+  }
+  if (!fs.isWritable(params.directory)) {
+    if (fs.exists(params.directory)) {
+      system.stderr.write(params.directory + ' is not writable.');
+    } else if (!fs.makeTree(params.directory)) {
+      system.stderr.write('Can\'t create directory ' + params.directory);
+    }
+  }
+}
+
 page.open(params.__dirname + '/_phantomjs.html', function (status) {
   if (status !== 'success') {
     system.stderr.write('Unable to launch Glow. Please reinstall the package');
@@ -45,7 +62,7 @@ page.open(params.__dirname + '/_phantomjs.html', function (status) {
       }
 
       if (isNaN(params.number) || params.number < 1) {
-        throw 'Wrong value of -n option, consider using an integer or "all" keyword';
+        throw 'Wrong value of -n option, consider using an integer or "all" keyword.';
       }
     }
 
@@ -223,7 +240,7 @@ page.onCallback = function (data) {
 
   var fileToWrite = params.file || data.name;
   if (params.directory) {
-    fileToWrite = params.directory + fs.separator + fileToWrite;
+    fileToWrite = params.directory + fileToWrite;
   }
   var stream = fs.open(fileToWrite, { 'mode': 'a', 'charset': 'ISO-8859-1' });
   stream.write(data.content);
@@ -232,9 +249,9 @@ page.onCallback = function (data) {
 };
 
 page.onResourceError = function (resourceError) {
-  system.stderr.write('Unable to connect to ' + resourceError.url + '. Make sure it\'s a valid Zax relay');
+  system.stderr.write('Unable to connect to ' + resourceError.url + '. Make sure it\'s a valid Zax relay.');
 };
 
 page.onResourceTimeout = function (request) {
-  system.stderr.write('Request timed out when trying to connect to ' + request.url + '. Make sure it\'s a valid Zax relay');
+  system.stderr.write('Request timed out when trying to connect to ' + request.url + '. Make sure it\'s a valid Zax relay.');
 };
