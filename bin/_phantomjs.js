@@ -25,7 +25,7 @@ page.open(params.__dirname + '/_phantomjs.html', function (status) {
       throw 'Provided private key is not a valid base64-encoded 32-byte key. Please run `glow key -s` to set the correct key.';
     }
 
-    if (command !== 'key' && command !== 'clean') {
+    if (command !== 'key') {
       try {
         params.guest_public_key.fromBase64();
       } catch (e) {
@@ -75,13 +75,6 @@ page.open(params.__dirname + '/_phantomjs.html', function (status) {
 
       var relay = new glow.Relay(params.relay_url);
 
-      if (command === 'clean') {
-        mbx.clean(relay).then(function () {
-          window.callPhantom();
-          return;
-        })
-      }
-
       mbx.keyRing.addGuest('sender', params.guest_public_key).then(function () {
         if (command === 'download') {
           alert('Connecting to relay...');
@@ -94,6 +87,28 @@ page.open(params.__dirname + '/_phantomjs.html', function (status) {
             if (messages[i].hasOwnProperty('uploadID')) {
               messagesToDownload.push(messages[i]);
             }
+          }
+
+          if (command === 'clean') {
+            var fileCounter = 0;
+            var promise = Array.apply(null, { length: messagesToDownload.length }).map(Function.call, Number).reduce(function (acc) {
+              return acc.then(function (res) {
+                return mbx.deleteFile(relay, messagesToDownload[fileCounter].uploadID).then(function (result) {
+                  fileCounter++;
+                  res.push(1);
+                  return res;
+                });
+              });
+            }, Promise.resolve([]));
+  
+            promise.then(function (total) {
+              // `total` files deleted
+              mbx.clean(relay).then(function () {
+                window.callPhantom();
+              });
+            });
+
+            return;
           }
 
           if (command === 'count') {

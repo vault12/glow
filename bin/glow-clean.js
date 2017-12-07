@@ -7,7 +7,7 @@ var common = require('./_glow_common');
 
 program
   .description('Delete all files in mailbox on the relay')
-  .arguments('<relay_url>')
+  .arguments('<relay_url> <guest_public_key>')
   .option('-i, --interactive', 'interactive mode')
   .parse(process.argv);
 
@@ -16,14 +16,17 @@ common.checkPrivateKey();
 if (program.interactive) {
   co(function* () {
     var relay_url = yield prompt(common.message('Relay URL', 'https://zax.example.com'));
+    var guest_public_key = yield prompt(common.message('Guest public key', 'base64'));
     common.runPhantom('clean', {
-      relay_url: relay_url
+      relay_url: relay_url,
+      guest_public_key: guest_public_key
     });
   });
-} else if (program.args.length < 1) {
+} else if (program.args.length < 2) {
   program.outputHelp();
 } else {
   common.runPhantom('clean', {
-    relay_url: program.args[0]
+    relay_url: program.args[0],
+    guest_public_key: program.args[1]
   });
 }
