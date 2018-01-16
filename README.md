@@ -26,6 +26,7 @@ glow clean <relay_url> <guest_public_key>                delete all files in mai
 glow count <relay_url> <guest_public_key> [options]      show number of pending files on the relay
 glow download <relay_url> <guest_public_key> [options]   download file(s) from the relay
 glow key [options]                                       show public key or h2(pk), set/update private key
+glow upload <relay_url> <guest_public_key> <file_url>    upload file to the relay
 glow help [cmd]                                          display help for [cmd]
 ```
 

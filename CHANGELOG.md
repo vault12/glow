@@ -1,3 +1,7 @@
+### v4.1.3
+
+* Add `upload` CLI command
+
 ### v4.1.2
 
 * Delete actual files from relay with `clean` CLI command, not just metadata
