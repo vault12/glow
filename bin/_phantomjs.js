@@ -22,6 +22,26 @@ if (command === 'download' && params.directory) {
   }
 }
 
+if (command === 'upload') {
+  if (!fs.isAbsolute(params.file_url)) {
+    params.file_url = fs.workingDirectory + fs.separator + params.file_url;
+  }
+  if (!fs.isReadable(params.file_url)) {
+    if (fs.exists(params.file_url)) {
+      system.stderr.write(params.file_url + ' is not readable.');
+    } else {
+      system.stderr.write(params.file_url + ' does not exist.');
+    }
+  }
+  params.contents = fs.read(params.file_url, {
+    mode: 'r',
+    charset: 'latin1'
+  });
+  params.filename = params.file_url.substring(params.file_url.lastIndexOf(fs.separator) + 1);
+  params.size = fs.size(params.file_url);
+  params.modified = fs.lastModified(params.file_url).getTime() / 1000;
+}
+
 page.open(params.__dirname + '/_phantomjs.html', function (status) {
   if (status !== 'success') {
     system.stderr.write('Unable to launch Glow. Please reinstall the package');
@@ -96,6 +116,31 @@ page.open(params.__dirname + '/_phantomjs.html', function (status) {
         if (command === 'download') {
           alert('Connecting to relay...');
         }
+
+        if (command === 'upload') {
+          alert('Starting upload...');
+          mbx.startFileUpload('sender', relay, {
+            name: params.filename,
+            orig_size: params.size,
+            modified: params.modified
+          }).then(function(res) {
+            alert('Upload ID ' + res.uploadID);
+            mbx.uploadFileChunk(relay, res.uploadID, params.contents, 0, 1, res.skey).then(function(res2) {
+              alert('Uploading chunk 1...');
+              mbx.getFileStatus(relay, res.uploadID).then(function(status) {
+                if (status.status === 'COMPLETE') {
+                  alert('Done!');
+                  alert('=====================');
+                } else {
+                  alert('Upload error');
+                }
+                window.callPhantom();
+              });
+            });
+          });
+          return;
+        }
+
         mbx.getRelayMessages(relay).then(function (messages) {
 
           // Filter messages sent from guest public key only
@@ -117,7 +162,7 @@ page.open(params.__dirname + '/_phantomjs.html', function (status) {
                 });
               });
             }, Promise.resolve([]));
-  
+
             promise.then(function (total) {
               // `total` files deleted
               mbx.clean(relay).then(function () {

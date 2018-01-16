@@ -9,4 +9,5 @@ program
   .command('count <relay_url> <guest_public_key> [options]', 'show number of pending files on the relay').alias('c')
   .command('download <relay_url> <guest_public_key> [options]', 'download file(s) from the relay').alias('d')
   .command('key [options]', 'show public key or h2(pk), generate a new keypair, set/update private key').alias('k')
+  .command('upload <relay_url> <guest_public_key> <file_url> [options]', 'upload a file to the relay').alias('u')
   .parse(process.argv);
