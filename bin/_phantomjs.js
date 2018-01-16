@@ -123,11 +123,31 @@ page.open(params.__dirname + '/_phantomjs.html', function (status) {
             name: params.filename,
             orig_size: params.size,
             modified: params.modified
-          }).then(function(res) {
+          }).then(function (res) {
             alert('Upload ID ' + res.uploadID);
-            mbx.uploadFileChunk(relay, res.uploadID, params.contents, 0, 1, res.skey).then(function(res2) {
-              alert('Uploading chunk 1...');
-              mbx.getFileStatus(relay, res.uploadID).then(function(status) {
+
+            var chunkSize = Math.round(res.max_chunk_size / 1.4);
+            var NUMBER_OF_CHUNKS = Math.ceil(params.size / chunkSize);
+            var chunkCounter = 0;
+            var promise = Array.apply(null, { length: NUMBER_OF_CHUNKS }).map(Function.call, Number).reduce(function (acc) {
+              return acc.then(function (sum) {
+                alert('Uploading chunk ' + (chunkCounter + 1) + '/' + NUMBER_OF_CHUNKS + '...');
+                return mbx.uploadFileChunk(relay,
+                  res.uploadID,
+                  params.contents.slice(chunkCounter * chunkSize, (chunkCounter + 1) * chunkSize),
+                  chunkCounter,
+                  NUMBER_OF_CHUNKS,
+                  res.skey
+                ).then(function (result) {
+                  chunkCounter++;
+                  alert('OK');
+                  return sum;
+                });
+              });
+            }, Promise.resolve([]));
+
+            promise.then(function (total) {
+              mbx.getFileStatus(relay, res.uploadID).then(function (status) {
                 if (status.status === 'COMPLETE') {
                   alert('Done!');
                   alert('=====================');
