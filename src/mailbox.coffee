@@ -231,7 +231,7 @@ class MailBox extends EventEmitter
         relay.upload(@, h2, encMsg)
 
   # Downloads pending relay messages
-  # Returns a Promise(messages)
+  # Returns a Promise([{fromTag, from, kind: 'type of message', nonce, time, msg: {object specific to given 'kind'}])
   relayMessages: (relay)->
     Utils.ensure(relay)
     relay.download(@).then (result)=>
@@ -239,15 +239,16 @@ class MailBox extends EventEmitter
         if (tag = @keyRing.tagByHpk(emsg.from))
           emsg['fromTag'] = tag
           if (emsg['kind'] == 'file')
-            emsg = JSON.parse emsg.data
-            @decodeMessage(tag, emsg.nonce, emsg.ctext).then (msg)=>
-              msg.uploadID = emsg.uploadID
-              msg.nonce = emsg.nonce
-              msg
+            data = JSON.parse emsg.data
+            @decodeMessage(tag, emsg.nonce, data.ctext).then (msg)=>
+              msg.uploadID = data.uploadID
+              emsg.msg = msg
+              delete emsg.data
+              emsg
           else
             @decodeMessage(tag, emsg.nonce, emsg.data).then (msg)=>
               if msg
-                emsg['msg'] = msg
+                emsg.msg = msg
                 delete emsg.data
               emsg
         else
@@ -284,12 +285,12 @@ class MailBox extends EventEmitter
 
   # --- Operations with files ---
 
-  # Returns a Promise
+  # Returns a Promise({skey, uploadID, name, orig_size, modified, created})
   getFileMetadata: (relay, uploadID)->
     Utils.ensure(relay, uploadID)
     @relayMessages(relay).then (msgs)=>
-      msgs = msgs.filter (msg) => msg.uploadID == uploadID
-      msgs[0]
+      msgs = msgs.filter (msg) => msg.kind == 'file' and msg.msg.uploadID == uploadID
+      msgs[0]?.msg
 
   # Returns a Promise
   startFileUpload: (guest, relay, fileMetadata)->
