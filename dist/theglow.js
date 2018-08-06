@@ -1608,7 +1608,7 @@ MailBox = (function(superClass) {
     return this.relayMessages(relay).then((function(_this) {
       return function(msgs) {
         msgs = msgs.filter(function(msg) {
-          return msg.uploadID === uploadID;
+          return msg.type == 'file' && msg.uploadID === uploadID;
         });
         return msgs[0];
       };

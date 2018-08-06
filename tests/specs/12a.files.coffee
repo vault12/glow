@@ -56,13 +56,13 @@ describe 'File transfer, wrapper API', ->
   it 'start upload', ->
     r = new Relay(__globalTest.host)
 
-    metadata =
+    window.__globalTest.metadata =
       name: (randWord randNum 4,14) + '.zip'
       orig_size: FILE_SIZE
       created: randNum 1480000000, 1520000000
       modified: randNum 1480000000, 1520000000
 
-    Alice.startFileUpload('Bob', r, metadata).then (response) ->
+    Alice.startFileUpload('Bob', r, __globalTest.metadata).then (response) ->
       expect(response).to.contain.all.keys ['uploadID', 'max_chunk_size', 'storage_token', 'skey']
       expect(response.uploadID).to.be.a 'string'
       window.__globalTest.uploadID = response.uploadID
@@ -71,7 +71,7 @@ describe 'File transfer, wrapper API', ->
   for k in [0...NUMBER_OF_CHUNKS]
     it "uploading chunk #{k}", ->
       r = new Relay(__globalTest.host)
-      
+
       i = __globalTest.uploadChunkIterator++
       chunk = FILE_BINARY.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
 
@@ -87,6 +87,13 @@ describe 'File transfer, wrapper API', ->
         expect(responseBob.status).equal 'COMPLETE'
         # Bob downloads metadata, to get secret key required to decrypt file chunks
         Bob.getFileMetadata(r, __globalTest.uploadID).then (metadata) ->
+          expect(metadata.skey).to.be.a 'string'
+          expect(metadata.name).equal __globalTest.metadata.name
+          expect(metadata.orig_size).equal __globalTest.metadata.orig_size
+          expect(metadata.modified).equal __globalTest.metadata.modified
+          expect(metadata.created).equal __globalTest.metadata.created
+          expect(metadata.uploadID).equal __globalTest.uploadID
+
           window.__globalTest.metadata = metadata
 
   DECODED_FILE_BINARY = ''
